@@ -2,20 +2,95 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard Klinik - Aguardando geração</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Klinik Odontologia</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0;
-       display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-.msg { text-align: center; }
-.msg h1 { font-size: 2rem; color: #60a5fa; margin-bottom: 12px; }
-.msg p  { color: #94a3b8; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+header{background:linear-gradient(135deg,#1e3a5f,#1a56a5);padding:18px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2563eb33}
+header h1{font-size:1.4rem;font-weight:700} header h1 span{color:#60a5fa}
+.period{background:#1e3a5f;border:1px solid #2563eb44;border-radius:8px;padding:4px 12px;font-size:.8rem;color:#93c5fd}
+.container{padding:22px 28px;max-width:1700px;margin:0 auto}
+.stitle{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:#475569;margin:20px 0 10px;border-bottom:1px solid #1e293b;padding-bottom:6px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.kpi.green::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.kpi.purple::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+.kpi.red::before{background:linear-gradient(90deg,#ef4444,#f87171)}
+.kpi.amber::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.kpi.cyan::before{background:linear-gradient(90deg,#06b6d4,#22d3ee)}
+.kpi label{font-size:.65rem;text-transform:uppercase;letter-spacing:.8px;color:#64748b;display:block;margin-bottom:6px}
+.kpi .val{font-size:1.5rem;font-weight:700}
+.kpi.blue .val{color:#60a5fa} .kpi.green .val{color:#34d399} .kpi.purple .val{color:#a78bfa}
+.kpi.red .val{color:#f87171} .kpi.amber .val{color:#fbbf24} .kpi.cyan .val{color:#22d3ee}
+.kpi .sub{font-size:.7rem;color:#64748b;margin-top:4px}
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px}
+.card h3{font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:14px}
+.card canvas{max-height:260px}
+footer{text-align:center;padding:16px;color:#475569;font-size:.72rem;border-top:1px solid #1e293b;margin-top:8px}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}.container{padding:14px}}
 </style>
 </head>
 <body>
-<div class="msg">
-  <h1>🦷 Klinik Odontologia</h1>
-  <p>Dashboard sendo gerado pelo GitHub Actions...</p>
-  <p>Aguarde a primeira execução automática ou dispare manualmente em Actions → Atualizar Dashboard → Run workflow.</p>
+<header>
+  <div><h1>🦷 <span>Klinik</span> Odontologia</h1><small style="color:#94a3b8;font-size:.75rem">Dashboard Operacional</small></div>
+  <div style="text-align:right">
+    <div class="period">📅 2026-05-01 → 2026-08-28</div>
+    <small style="color:#475569;font-size:.72rem;margin-top:4px;display:block">Atualizado 28/08/2026 20:32</small>
+  </div>
+</header>
+<div class="container">
+  <div class="stitle">Resumo Financeiro do Período</div>
+  <div class="kpi-grid">
+    <div class="kpi green"><label>Receita Total</label><div class="val">R$ 323.000,84</div><div class="sub">4 meses</div></div>
+    <div class="kpi red"><label>Despesas Totais</label><div class="val">R$ 192.290,94</div></div>
+    <div class="kpi green"><label>Resultado Líquido</label><div class="val">R$ 130.709,90</div><div class="sub">Margem 40.5%</div></div>
+    <div class="kpi blue"><label>Produção Aprovada</label><div class="val">R$ 323.000,84</div><div class="sub">2411 orçamentos</div></div>
+    <div class="kpi purple"><label>Taxa de Conversão</label><div class="val">52.2%</div><div class="sub">de 4620 orçamentos</div></div>
+    <div class="kpi amber"><label>Ticket Médio</label><div class="val">R$ 133,97</div></div>
+    <div class="kpi cyan"><label>Agendamentos</label><div class="val">1,845</div></div>
+    <div class="kpi red"><label>Faltas no Período</label><div class="val">392</div></div>
+  </div>
+  <div class="stitle">Faturamento Mensal</div>
+  <div class="g2">
+    <div class="card"><h3>Receita / Despesa / Resultado por Mês</h3><canvas id="finChart"></canvas></div>
+    <div class="card"><h3>Despesas por Categoria</h3><canvas id="catChart"></canvas></div>
+  </div>
+  <div class="stitle">Produção Clínica</div>
+  <div class="g2">
+    <div class="card"><h3>Produção por Especialidade (mês)</h3><canvas id="espChart"></canvas></div>
+    <div class="card" style="display:grid;grid-template-rows:1fr 1fr;gap:16px">
+      <div><h3>Conversão de Orçamentos</h3><canvas id="convChart" style="max-height:130px"></canvas></div>
+      <div><h3>Meta vs. Realizado</h3><canvas id="goalChart" style="max-height:130px"></canvas></div>
+    </div>
+  </div>
+  <div class="stitle">Agenda & Captação</div>
+  <div class="g3">
+    <div class="card"><h3>Agendamentos por Profissional</h3><canvas id="apptChart"></canvas></div>
+    <div class="card"><h3>Agendamentos por Especialidade</h3><canvas id="catApptChart"></canvas></div>
+    <div class="card"><h3>Como nos Encontrou</h3><canvas id="howMetChart"></canvas></div>
+  </div>
+  <div class="stitle">Faltas</div>
+  <div class="card" style="margin-bottom:20px"><h3>Faltas por Mês</h3><canvas id="missChart" style="max-height:180px"></canvas></div>
 </div>
+<footer>Klinik Odontologia • Dados via API Clinicorp • Gerado em 28/08/2026 20:32 UTC</footer>
+<script>
+const G={responsive:true,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:12,font:{size:11}}}},scales:{x:{ticks:{color:'#64748b',font:{size:11}},grid:{color:'#1e293b'}},y:{ticks:{color:'#64748b',font:{size:11},callback:v=>'R$'+v.toLocaleString('pt-BR')},grid:{color:'#334155'}}}};
+const GP={...G,scales:{...G.scales,y:{ticks:{color:'#64748b',font:{size:11}},grid:{color:'#334155'}}}};
+new Chart(document.getElementById('finChart'),{type:'bar',data:{labels:["2026-05", "2026-06", "2026-07", "2026-08"],datasets:[{label:'Receita',data:[65801.15, 68515.84, 112573.72, 76110.13],backgroundColor:'#3b82f633',borderColor:'#3b82f6',borderWidth:2},{label:'Despesa',data:[45055.71, 45152.83, 54892.94, 47189.46],backgroundColor:'#ef444433',borderColor:'#ef4444',borderWidth:2},{label:'Resultado',data:[20745.44, 23363.01, 57680.78, 28920.67],type:'line',borderColor:'#10b981',backgroundColor:'#10b98122',fill:true,tension:.4,yAxisID:'y'}]},options:{...G,interaction:{mode:'index',intersect:false}}});
+new Chart(document.getElementById('catChart'),{type:'bar',data:{labels:["Empr\u00e9stimo", "COMISS\u00c3O", "Funcion\u00e1rios", "Cadastro de Fornecedores", "Aluguel", "Fornecedores", "Materiais", "Impostos", "Software", "CRO"],datasets:[{label:'R$',data:[40456.67, 36758.01, 27677.88, 26939.2, 25135.59, 20506.24, 5428.3, 5285.21, 2136.8, 1459.44],backgroundColor:['#ef444455','#f59e0b55','#8b5cf655','#ef444444','#f97316aa','#ec4899aa','#06b6d4aa','#84cc16aa','#6366f1aa','#14b8a6aa'],borderColor:['#ef4444','#f59e0b','#8b5cf6','#ef4444','#f97316','#ec4899','#06b6d4','#84cc16','#6366f1','#14b8a6'],borderWidth:2}]},options:{...G,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',callback:v=>'R$'+v.toLocaleString('pt-BR')},grid:{color:'#334155'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}}}});
+new Chart(document.getElementById('espChart'),{type:'line',data:{labels:["May", "June", "July", "August"],datasets:[{"label": "CIRURGIA", "data": [145.29, 6960.74, 1890.42, 478.53], "backgroundColor": "#6366f133", "borderColor": "#6366f1", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "DENT\u00cdSTICA", "data": [4094.04, 9104.79, 14352.45, 7245.66], "backgroundColor": "#10b98133", "borderColor": "#10b981", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "ENDODONTIA", "data": [5133.5, 8108.43, 14955.28, 7733.93], "backgroundColor": "#f59e0b33", "borderColor": "#f59e0b", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "IMPLANTES", "data": [3123.18, 11117.88, 32326.11, 24089.97], "backgroundColor": "#ef444433", "borderColor": "#ef4444", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "ODONTOPEDIATRIA", "data": [56.18, 1551.09, 1114, 0], "backgroundColor": "#8b5cf633", "borderColor": "#8b5cf6", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "ORTODONTIA", "data": [5663.78, 12036.32, 11126.86, 16791.6], "backgroundColor": "#14b8a633", "borderColor": "#14b8a6", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "PERIODONTIA", "data": [3997.18, 3608.92, 8365.6, 5320.44], "backgroundColor": "#f9731633", "borderColor": "#f97316", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "PR\u00d3TESE", "data": [0, 5800, 18630, 11060], "backgroundColor": "#ec489933", "borderColor": "#ec4899", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "Periodontia", "data": [3768, 1852.67, 6013, 3390], "backgroundColor": "#06b6d433", "borderColor": "#06b6d4", "fill": false, "tension": 0.4, "pointRadius": 4}]},options:{...G,interaction:{mode:'index',intersect:false}}});
+new Chart(document.getElementById('convChart'),{type:'doughnut',data:{labels:['Aprovados','Não aprovados'],datasets:[{data:[2411, 2209],backgroundColor:['#10b98199','#ef444466'],borderColor:['#10b981','#ef4444'],borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:10,font:{size:10}}}}}});
+new Chart(document.getElementById('goalChart'),{type:'bar',data:{labels:["May", "June", "July", "August"],datasets:[{label:'Meta',data:[0, 0, 0, 0],backgroundColor:'#3b82f622',borderColor:'#3b82f6',borderWidth:2},{label:'Realizado',data:[65801.15000000001, 68515.84, 112573.72000000003, 76110.13000000002],backgroundColor:'#10b98155',borderColor:'#10b981',borderWidth:2}]},options:{...G}});
+new Chart(document.getElementById('apptChart'),{type:'bar',data:{labels:["ADRIELI ARAUJO DE ALMEIDA", "BARBARA CASARI LAURETTI", "MAISA KEFFLER CANDIA", "CAROLINE SILVA PREUS", "FERNANDA PANGONI SOARES", "LIVIA HELENA RIFON GARCIA", "NELSON TALATOCI OSHIRO FILHO", "JO\u00c3O PAULO SCHUSSLER"],datasets:[{label:'Agendamentos',data:[803, 258, 254, 229, 207, 52, 21, 21],backgroundColor:'#8b5cf655',borderColor:'#8b5cf6',borderWidth:2}]},options:{...GP,indexAxis:'y',plugins:{legend:{display:false}}}});
+new Chart(document.getElementById('catApptChart'),{type:'doughnut',data:{labels:["Manuten\u00e7\u00e3o ", "Avalia\u00e7\u00e3o", "Restaura\u00e7\u00e3o", "Retorno", "Profilaxia", "CONSULTA", "PARTICULAR", "Endodontia"],datasets:[{data:[410, 331, 236, 182, 154, 117, 106, 99],backgroundColor:['#6366f199','#10b98199','#f59e0b99','#ef444499','#8b5cf699','#14b8a699','#f9731699','#ec489999'],borderWidth:1}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:10,font:{size:10}}}}}});
+new Chart(document.getElementById('howMetChart'),{type:'bar',data:{labels:["N\u00e3o informado", "Plano/Conv\u00eanio", "Outros", "Indicado por", "Placa", "Google"],datasets:[{label:'Pacientes',data:[1795, 36, 6, 6, 1, 1],backgroundColor:'#06b6d455',borderColor:'#06b6d4',borderWidth:2}]},options:{...GP,indexAxis:'y',plugins:{legend:{display:false}}}});
+new Chart(document.getElementById('missChart'),{type:'bar',data:{labels:["May", "June", "July", "August"],datasets:[{label:'Faltas',data:[103, 107, 93, 89],backgroundColor:'#f59e0b55',borderColor:'#f59e0b',borderWidth:2}]},options:{...GP}});
+</script>
 </body>
 </html>
