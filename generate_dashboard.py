@@ -64,7 +64,7 @@ def api(path, from_str, to_str, extra=None):
     try:
         r = requests.get(BASE + path, headers=HEADERS, params=params, timeout=20)
         if r.status_code == 200: return r.json()
-        print(f"  ⚠ {path} [{from_str[:7]~↚{to_str[:7]}] → {r.status_code}")
+        print(f"  ⚠ {path} [{from_str[:7]}→{to_str[:7]}] → {r.status_code}")
         return None
     except Exception as e:
         print(f"  ✗ {path} → {e}")
@@ -98,7 +98,7 @@ def compute_period(label, from_str, to_str):
         if pt == "EXPENSES":
             month_exp[key] += amt
             cat_totals[cat] += amt
-        elif pt in ("REVENUE","INCOME"):
+        elif pt in ("REVENUE", "INCOME"):
             month_rev[key] += amt
 
     all_months = sorted(set(list(month_rev.keys()) + list(month_exp.keys())))
@@ -115,7 +115,7 @@ def compute_period(label, from_str, to_str):
             "margin":  round(prf / rev * 100, 1) if rev > 0 else 0
         })
 
-        top_cats   = sorted(cat_totals.items(), key=lambda x: -x[1])[:12]
+    top_cats   = sorted(cat_totals.items(), key=lambda x: -x[1])[:12]
     cat_labels = [c[0] for c in top_cats]
     cat_vals   = [round(c[1], 2) for c in top_cats]
 
@@ -212,76 +212,450 @@ def compute_period(label, from_str, to_str):
     appt_by_month = defaultdict(int)
     for a in appt_list:
         pid  = str(a.get("Dentist_PersonId",""))
-        name = prof_map.get(pid, f"Dr(�������͔��;�������ɵ�����(������������}��}�ɽ�m����t����(����������Ѐ􁄹��Р�
-�ѕ�����͍ɥ�ѥ�����M�����ѕ��ɥ�����Ȁ�M�����ѕ��ɥ��(������������}��}���m���t����(���������Ɍ�􁄹��Р�!����5��Ј������Ȁ�;�������ɵ����(�����������}���}�m�ɍt����(���������Ѐ􁄹��Р��є�������Р������ѵ����є������(������������Ё���������Ф����聅���}��}���ѡm��l��ut����((��������}�ɽ�}�ѕ�̀��ͽ�ѕ������}��}�ɽ���ѕ�̠������������������l�t�l���t(��������}���}�ѕ�̀���ͽ�ѕ������}��}��й�ѕ�̠�������������������l�t�l��t(�������}���}�ѕ�̀����ͽ�ѕ�����}���}���ѕ�̠����������������������l�t�l��t(��������}���ѡ}�ѕ�̀�ͽ�ѕ������}��}���Ѡ��ѕ�̠��(����ѽх�}����̀�����􁱕������}���Ф((�������R�R �-A%̃�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R (����ѽх�}ɕ؀�����մ����ѡ}ɕعم�Օ̠��(����ѽх�}���������մ����ѡ}����م�Օ̠��(����ѽх�}�ɽ��Ѐ�ѽх�}ɕ؀��ѽх�}���(������ɝ��}��Ѐ���ɽչ��ѽх�}�ɽ��Ѐ��ѽх�}ɕ؀�������Ĥ����ѽх�}ɕ؀������͔��(������͡��}Ʌє���ɽչ��ѽх�}���͕̀���ѽх�}����̀��ѽх�}���͕̤��������Ĥ�p(�����������������������ѽх�}����̀��ѽх�}���͕̤�������͔��((�������}ɕ�}��Ѐ􁵽�}���}��Ѐ��(��������������}���ѡ̤�����(���������ɕذ����Ѐ􁙥�}���ѡ�l��t�����}���ѡ�l��t(������������ɕ�l�ɕٕ�Ք�t�����(���������������}ɕ�}��Ѐ�ɽչ�������l�ɕٕ�Ք�t��ɕ�l�ɕٕ�Ք�t���ɕ�l�ɕٕ�Ք�t������Ĥ(������������ɕ�l������͔�t�����(���������������}���}��Ѐ�ɽչ�������l������͔�t��ɕ�l������͔�t���ɕ�l������͔�t������Ĥ((��������ѡ}͍�ɔ��ɽչ��(�������������������ɝ��}��ШȤ�����������Ԁ�(���������������������}Ʌє�ĸԤ����������Ԁ�(������������������ٝ}����}��Ф�����������Ԁ�(��������������������͡��}Ʌє�Ԥ���������(�����(��������ѡ}����Ȁ􀈌�����Ĉ��������ѡ}͍�ɔ���ԁ��͔�����������������ѡ}͍�ɔ�������͔��������Ј((����ɕ��ɸ��(���������������聱��������ɽ��聙ɽ�}��Ȱ��Ѽ��ѽ}��Ȱ���}���ѡ̈聸�(����������-A%�(���������ѽх�}ɕ؈�ɽչ��ѽх�}ɕذȤ���ѽх�}�����ɽչ��ѽх�}����Ȥ�(���������ѽх�}�ɽ��Ј�ɽչ��ѽх�}�ɽ��аȤ�����ɝ��}��Ј聵�ɝ��}��а(���������ѽх�}���չЈ�ɽչ��ѽх�}���չаȤ���ѽх�}���Ȉ�ѽх�}���Ȱ(���������ѽх�}ɕ���ѽх�}ɕ����ѽх�}��Ј�ѽх�}��а(�������������}Ʌє�聍���}Ʌє����ٝ}ѥ���Ј�ɽչ���ٝ}ѥ���аȤ�(���������ѽх�}����̈�ѽх�}����̰��ѽх�}���͕̈�ѽх�}���͕̰(�����������͡��}Ʌє�聹�͡��}Ʌє�������ѡ}͍�ɔ�聡���ѡ}͍�ɔ�(�������������ѡ}����Ȉ聡���ѡ}����Ȱ�����}ɕ�}��Ј聵��}ɕ�}��а(������������}���}��Ј聵��}���}��а���ٝ}����}��Ј�ɽչ���ٝ}����}��аĤ�(����������	ɕ����ٕ�(����������ɕ���ٕ���ɽչ���ɕ���ٕ��Ȥ����ٝ}��ᕑ}����ɽչ���ٝ}��ᕑ}���Ȥ�(����������ٝ}���ѡ��}ɕ؈�ɽչ���ٝ}���ѡ��}ɕذȤ����ٝ}���ѡ��}�����ɽչ���ٝ}���ѡ��}����Ȥ�(�����������}��ٕɅ���聉�}��ٕɅ�������}��ɝ����ɽչ����}��ɝ���Ȥ�(����������M��ɔ�����(�����������ɝ��}͍�ɔ��ɽչ������������ɝ��}��ШȤ��(�������������}͍�ɔ�耀�ɽչ��������������}Ʌє�ĸԤ��(�������������}͍�ɔ�耀�ɽչ�����������ٝ}����}��Ф��(�����������͡��}͍�ɔ��ɽչ�������������͡��}Ʌє�Ԥ��(�������������������������(������������}�����̈�m�l�������t���ȁ��������}���ѡ�t�(������������}ɕ؈耀��m�l�ɕٕ�Ք�t���ȁ��������}���ѡ�t�(������������}����耀��m�l������͔�t���ȁ��������}���ѡ�t�(������������}�ɽ��Ј�m�l��ɽ��Љt���ȁ��������}���ѡ�t�(������������}��ɝ����m�l���ɝ���t���ȁ��������}���ѡ�t�(����������Aɽ���ѥ��(����������ɽ�}�����̈聅��}������}�ɽ�������}ɕ�}���Ј聅��}ɕ�}���а(������������}���}���Ј聅��}���}���а���ɽ�}ɕ�}�������ɽ�}ɕ�}�����(����������ɽ�}���}�������ɽ�}���}��������ɽ�}���ѡ̈��ɽ�}���ѡ̰(����������ɽ�}ɕ؈��ɽ�}ɕذ���ɽ�}������ɽ�}�������ɽ�}�ɽ��Ј��ɽ�}�ɽ��а(����������
-�ѕ��ɥ��(������������}�����̈聍��}�����̰�����}م�̈聍��}م�̰(����������M��������(������������}���ѡ}�����̈聕��}���ѡ}�����̰�����}��х͕�̈聕��}��х͕�̰(���������ѽ�}�����m쉹����聹����م���ɽչ��ٰ�ȥ􁙽ȁ���ٰ����ѽ�}���t�(������������}���}م���ɽչ�����}���}م��Ȥ����}����̈聱������}���̤�(��������������(�������������}�����̈聝���}�����̰������}хɝ��̈聝���}хɝ��̰(�������������}���Յ��聝���}���Յ��������}��Ј聝���}��а(����������5��͕�(�������������}�����̈聵���}�����̰������}م�̈聵���}م�̰(���������������ѵ����(�������������}���ѡ}�����̈�m�l�t���ȁ���������}���ѡ}�ѕ��t�(�������������}���ѡ}م�̈耀�m�l�t���ȁ���������}���ѡ}�ѕ��t�(�������������}�ɽ���m쉹����聹�����Ј聍􁙽ȁ������������}�ɽ�}�ѕ��t�(�������������}��Ј老m쉹����聹�����Ј聍􁙽ȁ������������}���}�ѕ��t�(������������}��Ј耀�m쉹����聹�����Ј聍􁙽ȁ�����������}���}�ѕ��t�(����������}�ɽ�̈聱�������}��}�ɽ���(����������չ���}܈聵�����������}Ʌє�����ѽх�}��������͔����(�����(((���R�R�R �IU8�10�AI%=L��R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R ()���}�ɽ���Q=d�ɕ����������Ĥ���ѥ�����ф��������Ԥ��ɕ����������Ĥ)���}�ɽ���Q=d�ɕ����������Ĥ���ѥ�����ф�����������ɕ����������Ĥ)�ё}�ɽ���Q=d�ɕ���������Ѡ�İ�����Ĥ()�ɥ�Р�
-���ձ�����5P���ȁ��͕̤�����)���}��ф�􁍽���ѕ}��ɥ����5P������}�ɽ����əѥ�����d����������Q=}MQH�)�ɥ�Р�
-���ձ�����5EP��́��͕̤�����)���}��ф�􁍽���ѕ}��ɥ����5EP������}�ɽ����əѥ�����d����������Q=}MQH�)�ɥ�Р�
-���ձ�����eQ��������Յ�������)�ё}��ф�􁍽���ѕ}��ɥ����eQ����ё}�ɽ����əѥ�����d����������Q=}MQH�()AI%=L��쉵�Ј聵��}��ф�����Ј聵��}��ф����ѐ���ё}��х�)��Ʌ��}���􁑅ѕѥ�����ܠ����əѥ�����������d�� �4��((���R�R�R �!Q50��R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R )�ѵ��􁘈����=
-QeA��ѵ��(�ѵ��������е	H��(񡕅��(�ф�����͕��UQ����(�ф������٥�����Ј����ѕ���ݥ�Ѡ���٥���ݥ�Ѡ����ѥ���͍����Ĉ�(�ѥѱ���͡���ɐ�-������=���ѽ������ѥѱ��(�͍ɥ�Ё�Ɍ�����輽�����͑����ȹ��н��������й�� ии�����н����йյ�������̈��͍ɥ���(���屔�(��퉽�ͥ饹�鉽ɑ�ȵ������ɝ����������������(�ɽ����(�����������Ŕ촵����������촵����Ŕ��͈촵��������Ʉ�(������ɑ���Ŕ̈́՘촵ѕ��荔ɔ��촵ѕ�����ф͈�촵ѕ����������(������Ք�͈�ɘ�촵�ɕ���������촵��������Ս��촵ɕ�荕������(���������荘����촵�典��وِ�촵����荕�����촵����������٘��)��)�����홽�е�������M�����U$�����ѕ��դ�����������ѕ��ͅ�̵͕ɥ�퉅���ɽչ��مȠ�����퍽����مȠ��ѕ�Ф���������������٠홽�еͥ��������)�������퉅���ɽչ�鱥���ȵ�Ʌ����Р��Ց������Ř͐�����ń̈́ٔ��������ɄՄ�������(�������������������푥�����陱������ѥ�䵍��ѕ������������ݕ��텱�����ѕ��鍕�ѕ��(����ɑ�ȵ���ѽ������ͽ�����Ŕ̈́���퉽�͡��������������������������(����ͥѥ����ѥ����ѽ����赥����������)�����ȁ���홽�еͥ��ĸ�ɕ�홽�еݕ���������􁡕���ȁ�ā�����퍽�������ՙ���(���ɥ���������퉅���ɽչ��Ŕ̈́���퉽ɑ�������ͽ�����͈�ɘ���퉽ɑ�ȵɅ��������������������������홽�еͥ����ɕ�퍽�����͌ՙ�푥�����饹�������������ɝ������ѽ�������(�����ѕ��홽�еͥ����ɕ�퍽�����������ѕ�е������ɥ�����(���Q	L���AI%=�	UQQ=9L���(�ѽ�����푥�����陱��퉅���ɽչ��مȠ����Ȥ퉽ɑ�ȵ���ѽ������ͽ����مȠ����ɑ�Ȥ���������������흅�������ٕə��ܵ���Ѽ텱�����ѕ��鍕�ѕ�����ѥ�䵍��ѕ������������ݕ����(�х���푥�����陱��흅�������ٕə��ܵ���Ѽ홱������(�х�����������������������ͽ������ѕ�퉽ɑ�ȵ���ѽ������ͽ�����Ʌ����ɕ��퍽����مȠ��ѕ��̤홽�еͥ����ɕ�홽�еݕ������������ѕȵ������������ݡ�є������鹽�Ʌ���Ʌ�ͥѥ��酱�������͕ȵ͕����鹽����(�х�顽ٕ��퍽����مȠ��ѕ��Ȥ퉅���ɽչ��Ŕ��͈����(�х����ѥٕ�퍽����مȠ����Ք�퉽ɑ�ȵ���ѽ��������مȠ����Ք�퉅���ɽչ��͈�ɘ�����(���ɥ����ѹ��푥�����陱��흅����������������������������홱��͡ɥ����퉽ɑ�ȵ���������ͽ����مȠ����ɑ�Ȥ���ɝ�������������(���ѹ������������������퉽ɑ�ȵɅ���������홽�еͥ����ɕ�홽�еݕ�����������ͽ������ѕ�퉽ɑ�������ͽ�����������퉅���ɽչ���Ʌ����ɕ��퍽����مȠ��ѕ��̤��Ʌ�ͥѥ��酱���������ѕȵ�������������(���Ѹ顽ٕ��퉽ɑ�ȵ������مȠ����Ք�퍽����مȠ��ѕ�Х��(���Ѹ���ѥٕ�퉅���ɽչ��͈�ɘ���퉽ɑ�ȵ������مȠ����Ք�퍽�������ՙ���(���A91L���(�������푥�����鹽������������������������ݥ�Ѡ����������ɝ�������ѽ��(���������ѥٕ�푥�����鉱�����(��ѥѱ��홽�еͥ���ɕ��ѕ�е�Ʌ�͙�ɴ�����ɍ�͔����ѕȵ�����������퍽����مȠ��ѕ��̤���ɝ��������������퉽ɑ�ȵ���ѽ������ͽ�����Ŕ��͈������������ѽ�����푥�����陱��텱�����ѕ��鍕�ѕ�흅�������(��ѥѱ��鉕��ɕ�퍽�ѕ��蜜�ݥ�Ѡ����������������퉽ɑ�ȵɅ��������퉅���ɽչ��مȠ����Ք�홱��͡ɥ������(���-A$���(������ɥ��푥������ɥ��ɥ��ѕ����є����յ���ɕ���С��Ѽ���б�����������řȤ�흅���������ɝ������ѽ��������(�����퉅���ɽչ��مȠ����̤퉽ɑ�������ͽ�����������퉽ɑ�ȵɅ�������������������������ͥѥ���ɕ��ѥٔ��ٕə���顥������Ʌ�ͥѥ����Ʌ�͙�ɴ�������(����顽ٕ����Ʌ�͙�ɴ��Ʌ�ͱ�ѕd�����퉽ɑ�ȵ��������������(�����鉕��ɕ�퍽�ѕ��蜜���ͥѥ��酉ͽ��є�ѽ�����������ɥ����������������퉽ɑ�ȵɅ������������������(�������Ք�鉕��ɕ�퉅���ɽչ�鱥���ȵ�Ʌ����Р�������͈�ɘذ��͌ՙ����(������ɕ���鉕��ɕ�퉅���ɽչ�鱥���ȵ�Ʌ����Р������������İ�ٕ�݈ܥ��(������������鉕��ɕ�퉅���ɽչ�鱥���ȵ�Ʌ����Р��������Ս�ذ��шՙ����(�����ɕ��鉕��ɕ�퉅���ɽչ�鱥���ȵ�Ʌ����Р������������а����Մԥ��(�����������鉕��ɕ�퉅���ɽչ�鱥���ȵ�Ʌ����Р������������������ᄥ��(������典�鉕��ɕ�퉅���ɽչ�鱥���ȵ�Ʌ����Р��������وِа��ݔ����(������������鉕��ɕ�퉅���ɽչ�鱥���ȵ�Ʌ����Р����������٘İ��Ոљ����(�����������홽�еͥ���ɕ��ѕ�е�Ʌ�͙�ɴ�����ɍ�͔����ѕȵ�����������퍽����مȠ��ѕ��̤푥�����鉱������ɝ������ѽ�������(������م��홽�еͥ��ĸ��ɕ�홽�еݕ������������������������(�������Ք��م��퍽�������ՙ���������ɕ����م��퍽�����ѐ������������������م��퍽���荄�቙���(�����ɕ���م��퍽���荘����������������Ȁ�م��퍽���荙�������������典��م��퍽�����ɐ͕����������������م��퍽������ፘ���(�������Չ�홽�еͥ����ɕ�퍽����مȠ��ѕ��̤���ɝ���ѽ�����푥�����陱��텱�����ѕ��鍕�ѕ�흅�������(�������푥�����饹��������������������������퉽ɑ�ȵɅ���������홽�еͥ����ɕ�홽�еݕ����������(����������퉅���ɽչ����������퍽�����ѐ���������������퉅���ɽչ�荕�������퍽���荘�����������������퉅���ɽչ�荘������퍽���荙�������(���1e=UQL���(����푥������ɥ��ɥ��ѕ����є����յ���͙Ȁə�흅���������ɝ������ѽ��������(��ɕ�푥������ɥ��ɥ��ѕ����є����յ���řȀř�흅���������ɝ������ѽ��������(����푥������ɥ��ɥ��ѕ����є����յ���řȀřȀř�흅���������ɝ������ѽ��������(�����푥������ɥ��ɥ��ѕ����є����յ���řȀə�흅���������ɝ������ѽ��������(���
-IL���(���ɑ�퉅���ɽչ��مȠ����̤퉽ɑ�������ͽ�����������퉽ɑ�ȵɅ������������������������(���ɐ����홽�еͥ����ɕ��ѕ�е�Ʌ�͙�ɴ�����ɍ�͔����ѕȵ�����������퍽����مȠ��ѕ��̤���ɝ������ѽ������푥�����陱��텱�����ѕ��鍕�ѕ�흅�������(���ɐ����م�����ൡ�������������(���!1Q ���(�����Ѡ��յ�홽�еͥ��̸�ɕ�홽�еݕ�����������������������ѕ�е�����鍕�ѕ���(�����Ѡ�������홽�еͥ����ɕ�퍽����مȠ��ѕ��̤�ѕ�е�Ʌ�͙�ɴ�����ɍ�͔����ѕȵ������������ѕ�е�����鍕�ѕ����ɝ���ѽ�������(���AI=IML���(��ɽ��퉅���ɽչ������Ʉ퉽ɑ�ȵɅ���������������������ٕə���顥�������ɝ���ѽ�������(��ɽ�������������������퉽ɑ�ȵɅ����������Ʌ�ͥѥ���ݥ�Ѡ������(���Q	1L���(��х�����ݥ�Ѡ�����퉽ɑ�ȵ������͔鍽����͔홽�еͥ����ɕ���(��х����ѡ�퍽����مȠ��ѕ��̤홽�еͥ���ɕ��ѕ�е�Ʌ�͙�ɴ�����ɍ�͔����ѕȵ���������������������������퉽ɑ�ȵ���ѽ������ͽ������������ѕ�е�����鱕��홽�еݕ����������(��х����ё�����������������퉽ɑ�ȵ���ѽ������ͽ�����Ŕ��͈퍽����مȠ��ѕ�Х��(��х������顽ٕȁё�퉅���ɽչ��Ŕ��͈����(��х������յ��ѕ�е������ɥ���홽�еمɥ��е�յ�ɥ��х�ձ�ȵ�յ���(����������퉅���ɽչ������Ʉ퉽ɑ�ȵɅ���������������������ٕə���顥������(��������ȵ�����������������퉽ɑ�ȵɅ����������(�х��푥�����饹��������������������������퉽ɑ�ȵɅ��������홽�еͥ����ɕ���(�х�������퉅���ɽչ����������퍽�����ѐ������х��݅ɹ�퉅���ɽչ�荘������퍽���荙��������х������퉅���ɽչ�荕�������퍽���荘�������(������ɽ��푥�����陱������ѥ�䵍��ѕ������������ݕ��텱�����ѕ��鍕�ѕ������������������퉅���ɽչ������Ʉ퉽ɑ�ȵɅ��������퉽ɑ�ȵ���������ͽ������ɝ������ѽ�������)���ѕ���ѕ�е�����鍕�ѕ��������������퍽����������홽�еͥ����ɕ�퉽ɑ�ȵѽ������ͽ�����Ŕ��͈���ɝ���ѽ�������)���������ݥ�Ѡ��������친���ɥ��ѕ����є����յ���ř��������ɥ��ѕ����є����յ���řȀř�����)���������ݥ�Ѡ�������친Ȱ��ɔ���̰������ɥ��ѕ����є����յ���ř��������������������������ѽ�����홱�൑�ɕ�ѥ��鍽�յ�텱�����ѕ��陱���х�������ɥ����ѹ��퉽ɑ�ȵ����鹽�����������������퉽ɑ�ȵѽ������ͽ����مȠ����ɑ�Ȥ�ݥ�Ѡ��������������ѽ�������������ɥ���ɥ��ѕ����є����յ���ɕ���РȰřȥ����(���屔�(𽡕���(񉽑��((񡕅����(�����(��������~�܀������-������������=���ѽ��������(�����͵������屔􉍽����������홽�еͥ���ɕ����͡���ɐ�ᕍ�ѥټ��ȸ��͵����(��𽑥��(�����(�����؁��������ɥ���������������ɥ�����������~N��P𽑥��(�����؁����������ѕ����Յ��酑�����흕Ʌ��}���𽑥��(��𽑥��(𽡕�����((�؁������ѽ���Ȉ�(���؁������х�̈�(�����؁������х����ѥٔ������������ܠ�����j��ᕍ�ѥټ𽑥��(�����؁������х��������������������ܠĤ���~J���������ɼ𽑥��(�����؁������х��������������������ܠȤ���~�܁
-������𽑥��(�����؁������х��������������������ܠ̤���~N(�
-���ɍ���𽑥��(�����؁������х��������������������ܠФ���~N�=��Ʌ������𽑥��(��𽑥��(���؁��������ɥ����ѹ̈�(�������ѽ����������Ѹ���ѥٔ����ф��􉵅Ј����������ݥэ�A�ɥ������М���5P���ѽ��(�������ѽ����������Ѹ�����������ф����Ј����������ݥэ�A�ɥ������М���5EP���ѽ��(�������ѽ����������Ѹ�����������ф����ѐ�����������ݥэ�A�ɥ�����ѐ����eQ���ѽ��(��𽑥��(𽑥��((�����Q����P�a
-UQ%Y<����(�؁��������������ѥٔ���������(���؁�������ѥѱ���I��յ��ᕍ�ѥټ𽑥��(���؁����������ɥ���(�����؁����������ɕ����񱅉���I����ф�Q�х�𽱅�����؁������م���������ɕ؈��P𽑥���؁�������Ո��������ɕص�Ո��𽑥��𽑥��(�����؁���������ɕ���񱅉�������́ͅQ�х��𽱅�����؁������م���������������P𽑥���؁�������Ո�������������Ո��𽑥��𽑥��(�����؁����������ɕ�����������ɽ��е��ɐ��񱅉���I��ձх���3��ե��𽱅�����؁������م����������ɽ��Ј��P𽑥���؁�������Ո���������ɽ��е�Ո��𽑥��𽑥��(�����؁�����������Ք��񱅉���Aɽ�������ɽم��𽱅�����؁������م����������ɽ����P𽑥���؁�������Ո���������ɽ���Ո��𽑥��𽑥��(�����؁�����������������񱅉���Q�ᄁ���
-��ٕ����𽱅�����؁������م������������؈��P𽑥���؁�������Ո�����������ص�Ո��𽑥��𽑥��(�����؁�������������Ȉ�񱅉���Q����Ё7����𽱅�����؁������م���������ѥ���Ј��P𽑥��𽑥��(�����؁����������典��񱅉�����������ѽ�𽱅�����؁������م�������������̈��P𽑥��𽑥��(�����؁�������������Ȉ���������͡�ܵ��ɐ��񱅉���Q�ᄁ���9��͡��𽱅�����؁������م�����������͡�܈��P𽑥���؁�������Ո����������͡�ܵ�Ո��𽑥��𽑥��(��𽑥��((���؁�������Ȉ�(�����؁�����􉍅ɐ����屔􉑥�����陱��홱�൑�ɕ�ѥ��鍽�յ�흅��������(����������~��M�鑔����9��͍�����(�������؁��屔�ѕ�е�����鍕�ѕ������������������(���������؁�����􉡕��Ѡ��մ����􉡕��Ѡ��մ���P𽑥��(���������؁�����􉡕��Ѡ�������������𽑥��(���������؁��屔􉵅ɝ���ѽ�����홽�еͥ����ɕ�홽�еݕ������������ѕȵ���������������􉡕��Ѡ���������Ј��P𽑥��(������𽑥��(�������؁��屔􉑥�����陱��홱�൑�ɕ�ѥ��鍽�յ�흅�����홽�еͥ����ɕ���(�����������(�����������؁��屔􉑥�����陱������ѥ�䵍��ѕ������������ݕ��퍽����مȠ��ѕ��̤���ɝ������ѽ�������������5�ɝ������ե�����������������͍�ɔ���ɝ�����Ј���屔􉍽����مȠ��ѕ�Ф���P������𽑥��(�����������؁�������ɽ����؁�������ɽ�����������͍�ɔ���ɝ�����Ȉ���屔�ݥ�Ѡ���퉅���ɽչ��مȠ���ɕ�����𽑥��𽑥��(��������𽑥��(�����������(�����������؁��屔􉑥�����陱������ѥ�䵍��ѕ������������ݕ��퍽����مȠ��ѕ��̤���ɝ������ѽ�������������
-��ٕ���������ɍ������������������͍�ɔ����ص��Ј���屔􉍽����مȠ��ѕ�Ф���P������𽑥��(�����������؁�������ɽ����؁�������ɽ�����������͍�ɔ����ص��Ȉ���屔�ݥ�Ѡ���퉅���ɽչ��مȠ�����������𽑥��𽑥��(��������𽑥��(�����������(�����������؁��屔􉑥�����陱������ѥ�䵍��ѕ������������ݕ��퍽����مȠ��ѕ��̤���ɝ������ѽ�������������ѥ������Ѽ������х����������������͍�ɔ��������Ј���屔􉍽����مȠ��ѕ�Ф���P������𽑥��(�����������؁�������ɽ����؁�������ɽ�����������͍�ɔ��������Ȉ���屔�ݥ�Ѡ���퉅���ɽչ��مȠ������Ȥ��𽑥��𽑥��(��������𽑥��(�����������(�����������؁��屔􉑥�����陱������ѥ�䵍��ѕ������������ݕ��퍽����مȠ��ѕ��̤���ɝ������ѽ�������������
-����ɕ�����Ѽ���������������͍�ɔ���͡�ܵ��Ј���屔􉍽����مȠ��ѕ�Ф���P������𽑥��(�����������؁�������ɽ����؁�������ɽ�����������͍�ɔ���͡�ܵ��Ȉ���屔�ݥ�Ѡ���퉅���ɽչ��مȠ���典���𽑥��𽑥��(��������𽑥��(������𽑥��(����𽑥��(�����؁�����􉍅ɐ��(����������~N �Q��������������Aɽ���������I����ф���(������񍅹م́����ɕ��
-���Ј�𽍅�م��(����𽑥��(��𽑥��((���؁������ɔ��(�����؁�����􉍅ɐ��(����������j[��<�A��Ѽ�����ե���ɥ��5��ͅ����(�������؁��􉉔����ѕ�Ј�𽑥��(����𽑥��(�����؁�����􉍅ɐ��(����������~R��Aɽ�������P�A��᥵�̀́5�͕����(�������؁����ɽ�����ѕ�Ј���屔􉑥�����陱��홱�൑�ɕ�ѥ��鍽�յ�흅����������������������𽑥��(����𽑥��(��𽑥��(𽑥��((�����Q�ă�P�%99
-%I<����(�؁�����������������Ĉ�(���؁�������ѥѱ���A�ə�ɵ������������Ʉ𽑥��(���؁����������ɥ���(�����؁����������ɕ����񱅉���I����ф�A������𽱅�����؁������م�����􉘵ɕ؈��P𽑥���؁�������Ո����􉘵ɕص�Ո��𽑥��𽑥��(�����؁���������ɕ���񱅉�������́ͅA������𽱅�����؁������م�����􉘵������P𽑥��𽑥��(�����؁����������ɕ������􉘵�ɽ��е��ɐ��񱅉���1Սɼ�3��ե��𽱅�����؁������م�����􉘵�ɽ��Ј��P𽑥���؁�������Ո����􉘵��ɝ����Ո��𽑥��𽑥��(�����؁�����������Ք��񱅉���I����ф�7�����7��𽱅�����؁������م�����􉘵�ٜ�ɕ؈��P𽑥��𽑥��(�����؁�������������Ȉ�񱅉�������̈́�7�����7��𽱅�����؁������م�����􉘵�ٜ�������P𽑥��𽑥��(�����؁����������典��񱅉���	ɕ����ٕ��5��ͅ�𽱅�����؁������م�����􉘵�����P𽑥��𽑥��(��𽑥��(���؁�������ѥѱ���������Ʌѥټ����I��ձх��𽑥��(���؁������Ȉ�(�����؁�����􉍅ɐ�����I����ф�������̈́���I��ձх�����ȁ7�����񍅹م́��􉙥�
-���Ј�𽍅�م��𽑥��(�����؁�����􉍅ɐ�����5�ɝ���3��ե�����ȁ7�̀������񍅹م́��􉵅ɝ��
-���Ј�𽍅�م��𽑥��(��𽑥��(���؁�������ѥѱ���������Ʉ����
-��ѽ�𽑥��(���؁������ɔ��(�����؁�����􉍅ɐ���������́ͅ��ȁ
-�ѕ��ɥ����񍅹م́��􉍅�
-���Ј�𽍅�م��𽑥��(�����؁�����􉍅ɐ��(���������I��������������ͅ����(�������х����������х������ѡ���������Ѡ�
-�ѕ��ɥ��Ѡ��Ѡ�������մ��Q�х��Ѡ��Ѡ�������մ����Ѡ��Ѡ���屔�ݥ�Ѡ��������	��Ʉ�Ѡ������ѡ����(�������щ��䁥�����ɽ�̈��щ�����х����(����𽑥��(��𽑥��(𽑥��((�����Q�ȃ�P�
-359%
-<����(�؁�����������������Ȉ�(���؁�������ѥѱ���Aɽ������
-������𽑥��(���؁����������ɥ���(�����؁�����������Ք��񱅉���Aɽ�������ɽم��𽱅�����؁������م�����􉌵�ɽ����P𽑥���؁�������Ո����􉌵�ɽ���Ո��𽑥��𽑥��(�����؁����������ɕ����񱅉���Q����Ё7����𽱅�����؁������م�����􉌵ѥ���Ј��P𽑥��𽑥��(�����؁�����������������񱅉���������������́ѥم�𽱅�����؁������م�����􉌵����̈��P𽑥��𽑥��(�����؁�������������Ȉ�񱅉���Q�х����������ѽ�𽱅�����؁������م�����􉌵����̈��P𽑥��𽑥��(��𽑥��(���؁�������ѥѱ���I����ф���ȁ������������𽑥��(���؁������Ȉ�(�����؁�����􉍅ɐ�����ٽ��������ȁ����������������̤���񍅹م́�����
-���Ј�𽍅�م��𽑥��(�����؁�����􉍅ɐ��(���������I��������������������������(�������х����������х������ѡ���������Ѡ��������������Ѡ��Ѡ�������մ��Q�х��Ѡ��Ѡ���屔�ݥ�Ѡ��������M��ɔ�Ѡ������ѡ����(�������щ��䁥�����ɽ�̈��щ�����х����(����𽑥��(��𽑥��(���؁�������ѥѱ���A�ə�ɵ�������ȁAɽ���ͥ����𽑥��(���؁������ɔ��(�����؁�����􉍅ɐ�������������ѽ́��ȁAɽ���ͥ�������񍅹م́������
-���Ј�𽍅�م��𽑥��(�����؁�����􉍅ɐ�����5������������������̀����������ѽ̤���񍅹م́��􉍅����
-���Ј�𽍅�م��𽑥��(��𽑥��(𽑥��((�����Q�̃�P�
-=5I
-%0����(�؁�����������������̈�(���؁�������ѥѱ���չ���
-���ɍ���𽑥��(���؁����������ɥ���(�����؁�����������Ք��񱅉���=������ѽ́�Ʌ���𽱅�����؁������م�����􉍴���Ј��P𽑥��𽑥��(�����؁����������ɕ����񱅉����ɽم���𽱅�����؁������م�����􉍴����Ȉ��P𽑥��𽑥��(�����؁���������ɕ���񱅉���;����ɽم���𽱅�����؁������م�����􉍴�ɕ����P𽑥��𽑥��(�����؁�����������������񱅉���
-��ٕ����𽱅�����؁������م�����􉍴����؈��P𽑥��𽑥��(�����؁�������������Ȉ�񱅉���Q����Ё7����𽱅�����؁������م�����􉍴�ѥ���Ј��P𽑥��𽑥��(�����؁����������ɕ����񱅉���I����ф��ɽم��𽱅�����؁������م�����􉍴����չЈ��P𽑥��𽑥��(��𽑥��(���؁������ɔ��(�����؁�����􉍅ɐ��(����������~R�չ������
-��ٕ�������(�������؁���չ�������ѕ�Ј���屔􉑥�����陱��홱�൑�ɕ�ѥ��鍽�յ�흅�����������������������𽑥��(����𽑥��(�����؁�����􉍅ɐ������ɽم��́�́;����ɽم������񍅹م́��􉍽��
-���Ј�𽍅�م��𽑥��(��𽑥��(���؁�������ѥѱ���5�ф��́I����酑�𽑥��(���؁������Ȉ�(�����؁�����􉍅ɐ�����5�ф��̸�I����酑����ȁ7�����񍅹م́��􉝽��
-���Ј�𽍅�م��𽑥��(�����؁�����􉍅ɐ��(���������ѥ������Ѽ���ȁ7�����(�������х����������х������ѡ���������Ѡ�7���Ѡ��Ѡ�������մ��5�ф�Ѡ��Ѡ�������մ��I����酑��Ѡ��Ѡ�������մ����Ѡ��Ѡ�Mх����Ѡ������ѡ����(�������щ��䁥�􉝽���ɽ�̈��щ�����х����(����𽑥��(��𽑥��(���؁�������ѥѱ���
-��ч�������A�����ѕ�𽑥��(���؁�����􉍅ɐ����屔􉵅ɝ������ѽ��������(�������
-������́�����ɽ����񍅹م́��􉡽�5��
-���Ј���屔􉵅ൡ�������������𽍅�م��(��𽑥��(𽑥��((�����Q�Ѓ�P�=AI
-%=90����(�؁�����������������Ј�(���؁�������ѥѱ���Y�����=��Ʌ������𽑥��(���؁����������ɥ���(�����؁����������典��񱅉���Q�х����������ѽ�𽱅�����؁������م������������̈��P𽑥��𽑥��(�����؁���������ɕ���񱅉���Q�х����х�𽱅�����؁������م�����������̈��P𽑥��𽑥��(�����؁�������������Ȉ��������͡�ܵ��ɐ��񱅉���Q�ᄁ���9��͡��𽱅�����؁������م����������͡�܈��P𽑥��𽑥��(�����؁�����������������񱅉�����ѥ�х́ѥٽ�𽱅�����؁������م���������ɽ�̈��P𽑥��𽑥��(��𽑥��(���؁������ɔ��(�����؁�����􉍅ɐ�����Y��յ�������������ѽ́��ȁ7�����񍅹م́������5��ѡ
-���Ј�𽍅�م��𽑥��(�����؁�����􉍅ɐ�������х́��ȁ7�����񍅹م́��􉵥��
-���Ј�𽍅�م��𽑥��(��𽑥��(���؁�������ѥѱ���A�ə�ɵ�������ȁ��ѥ�ф𽑥��(���؁������ɔ��(�����؁�����􉍅ɐ��(�����������������ѽ́��ȁ��ѥ�ф���(�������х����������х������ѡ���������Ѡ���ѥ�ф�Ѡ��Ѡ�������մ��Eѐ�Ѡ��Ѡ���屔�ݥ�Ѡ��������Y��յ��Ѡ������ѡ����(�������щ��䁥����еɽ�̈��щ�����х����(����𽑥��(�����؁�����􉍅ɐ�����
-��������
-��ч������񍅹م́��􉡽�5��
-����Ȉ�𽍅�م��𽑥��(��𽑥��(𽑥��((񙽽ѕ��-������=���ѽ�������P��͡���ɐ�ᕍ�ѥټ��ȸă�P����́٥��
-���������A$��P�흕Ʌ��}���𽙽�ѕ��((�͍ɥ���)����ЁAI%=L���(�AI%=L���)����Ё
-=1=IL����(�
-=1=IL���((����R�R �Q����ݥэ������R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R )�չ�ѥ����ܡ����(�����յ��й�Օ��M����ѽ������х������������б����й�����1��йѽ��������ѥٔ����������(�����յ��й�Օ��M����ѽ�����������������������������������1��йѽ��������ѥٔ����������)��((����R�R ��ɵ��ѕ�̃�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R )�չ�ѥ�����Сإ��(���������ձ����9�8�ؤ��ɕ��ɸ��H��������(��ɕ��ɸ��H����9յ��ȡؤ�ѽ1�����M�ɥ�����е	H���������յɅ�ѥ��������ȱ��᥵յɅ�ѥ�������������)��)�չ�ѥ�����Ѭ�إ��(���������ձ����9�8�ؤ��ɕ��ɸ��H�����(����9յ��ȡؤ�(��������Ŕؤ�ɕ��ɸ��H�����ؼŔؤ�ѽ�ᕐ�Ĥ��4��(��������Ŕ̤�ɕ��ɸ��H�����ؼŔ̤�ѽ�ᕐ�Ĥ��,��(��ɕ��ɸ��H����5�Ѡ�ɽչ��ؤ�)��)�չ�ѥ�����ȡ����ɕ��ɸ�������D��������L�蟊H�m��)�չ�ѥ��������
-�̡����ɕ��ɸ����������蝑�����((����R�R �Q��Ѓ�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R )�չ�ѥ�����С���م���퍽��Ё�����յ��й���������	�%�������������ѕ��
-��ѕ���م����)�չ�ѥ����ѵ�����م���퍽��Ё�����յ��й���������	�%������������������!Q50�����)�չ�ѥ�����屔�����ɽ��م���퍽��Ё�����յ��й���������	�%���������������展m�ɽ�t�م����((����R�R �
-���Ё���х���̃�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R )��Ё�ɕ��
-���б���
-���б��ɝ��
-���б���
-���б���
-���б����
-���б������
-���а(��������
-���б����
-���б���5��
-���б����5��ѡ
-���б����
-���б���5��
-������()����Ё����ф͈�������Ŕ��͈�����������Ԝ�)����Ё͍���H���ѥ�����퍽���蜌����ሜ��������ͥ��������������������H���عѽ1�����M�ɥ�����е	H������ɥ���퍽����������)����Ё͍���8���ѥ�����퍽���蜌����ሜ��������ͥ����������ɥ���퍽����������)����Ё͍���@���ѥ�����퍽���蜌����ሜ��������ͥ�������������������ج�������ɥ���퍽����������)����Ё͍���`���ѥ�����퍽���蜌����ሜ��������ͥ����������ɥ���퍽����������)����Ё��������������퍽��������]��Ѡ��ı�������ͥ�����������)����Ё���H�����ͥѥ���ɥ��М���������퍽��������]��Ѡ�����������ͥ�����������)����Ё��AI%=L�����()�չ�ѥ�������
-����̠���(������Ё��AI%=L�����(���ɕ��
-�������܁
-���С���յ��й���������	�%����ɕ��
-���М��������蝱�����(������ф���������鐹�ɽ�}�����̱��х͕���l(��������������I����ф����ф鐹���}ɕ�}���б��ɑ��
-����蜌�����Ĝ������ɽչ�
-����蜌�������Ȝ��������Ք�ѕ�ͥ���б�����I������̱�������际�͕���(������������������̈́����ф鐹���}���}���б��ɑ��
-����蜍���444',backgroundColor:'#ef444422',fill:false,tension:.4,pointRadius:3,spanGaps:false}},
+        name = prof_map.get(pid, f"Dr(a). {pid[:6]}" if pid else "Não informado")
+        appt_by_prof[name] += 1
+        cat = a.get("CategoryDescription","Sem categoria") or "Sem categoria"
+        appt_by_cat[cat] += 1
+        src = a.get("HowDidMeet","") or "Não informado"
+        how_met_d[src] += 1
+        dt = a.get("Date", a.get("AppointmentDate",""))
+        if dt and len(dt) >= 7: appt_by_month[dt[:7]] += 1
+
+    appt_prof_items  = sorted(appt_by_prof.items(),  key=lambda x:-x[1])[:10]
+    appt_cat_items   = sorted(appt_by_cat.items(),   key=lambda x:-x[1])[:8]
+    how_met_items    = sorted(how_met_d.items(),      key=lambda x:-x[1])[:8]
+    appt_month_items = sorted(appt_by_month.items())
+    total_appts      = len(appt_list)
+
+    # ── KPIs ───────────────────────────────────────────────────────────────────
+    total_rev    = sum(month_rev.values())
+    total_exp    = sum(month_exp.values())
+    total_profit = total_rev - total_exp
+    margin_pct   = round(total_profit / total_rev * 100, 1) if total_rev > 0 else 0
+    noshow_rate  = round(total_misses / (total_appts + total_misses) * 100, 1) \
+                   if (total_appts + total_misses) > 0 else 0
+
+    mom_rev_pct = mom_exp_pct = 0
+    if len(fin_months) >= 2:
+        prev, last = fin_months[-2], fin_months[-1]
+        if prev["revenue"] > 0:
+            mom_rev_pct = round((last["revenue"]-prev["revenue"])/prev["revenue"]*100, 1)
+        if prev["expense"] > 0:
+            mom_exp_pct = round((last["expense"]-prev["expense"])/prev["expense"]*100, 1)
+
+    health_score = round(
+        min(100, margin_pct*2)      * 0.35 +
+        min(100, conv_rate*1.5)     * 0.25 +
+        min(100, avg_goal_pct)      * 0.25 +
+        max(0, 100-noshow_rate*5)   * 0.15
+    )
+    health_color = "#10b981" if health_score>=75 else "#f59e0b" if health_score>=50 else "#ef4444"
+
+    return {
+        "label": label, "from": from_str, "to": to_str, "n_months": n,
+        # KPIs
+        "total_rev": round(total_rev,2), "total_exp": round(total_exp,2),
+        "total_profit": round(total_profit,2), "margin_pct": margin_pct,
+        "total_amount": round(total_amount,2), "total_appr": total_appr,
+        "total_rej": total_rej, "total_est": total_est,
+        "conv_rate": conv_rate, "avg_ticket": round(avg_ticket,2),
+        "total_appts": total_appts, "total_misses": total_misses,
+        "noshow_rate": noshow_rate, "health_score": health_score,
+        "health_color": health_color, "mom_rev_pct": mom_rev_pct,
+        "mom_exp_pct": mom_exp_pct, "avg_goal_pct": round(avg_goal_pct,1),
+        # Break-even
+        "breakeven": round(breakeven,2), "avg_fixed_mo": round(avg_fixed_mo,2),
+        "avg_monthly_rev": round(avg_monthly_rev,2), "avg_monthly_exp": round(avg_monthly_exp,2),
+        "be_coverage": be_coverage, "be_margin": round(be_margin,2),
+        # Score bars
+        "margin_score": round(min(100,margin_pct*2)),
+        "conv_score":   round(min(100,conv_rate*1.5)),
+        "goal_score":   round(min(100,avg_goal_pct)),
+        "noshow_score": round(max(0,100-noshow_rate*5)),
+        # Financial charts
+        "fin_labels": [m["label"] for m in fin_months],
+        "fin_rev":    [m["revenue"] for m in fin_months],
+        "fin_exp":    [m["expense"] for m in fin_months],
+        "fin_profit": [m["profit"] for m in fin_months],
+        "fin_margin": [m["margin"] for m in fin_months],
+        # Projection
+        "proj_labels": all_labels_proj, "all_rev_hist": all_rev_hist,
+        "all_exp_hist": all_exp_hist, "proj_rev_line": proj_rev_line,
+        "proj_exp_line": proj_exp_line, "proj_months": proj_months,
+        "proj_rev": proj_rev, "proj_exp": proj_exp, "proj_profit": proj_profit,
+        # Categories
+        "cat_labels": cat_labels, "cat_vals": cat_vals,
+        # Specialty
+        "esp_month_labels": esp_month_labels, "esp_datasets": esp_datasets,
+        "top_esp": [{"name": nm, "val": round(vl,2)} for nm,vl in top_esp],
+        "max_esp_val": round(max_esp_val,2), "n_specs": len(esp_keys),
+        # Goals
+        "goal_labels": goal_labels, "goal_targets": goal_targets,
+        "goal_actual": goal_actual, "goal_pct": goal_pct,
+        # Misses
+        "miss_labels": miss_labels, "miss_vals": miss_vals,
+        # Appointments
+        "appt_month_labels": [x[0] for x in appt_month_items],
+        "appt_month_vals":   [x[1] for x in appt_month_items],
+        "appt_prof": [{"name": nm,"cnt": c} for nm,c in appt_prof_items],
+        "appt_cat":  [{"name": nm,"cnt": c} for nm,c in appt_cat_items],
+        "how_met":   [{"name": nm,"cnt": c} for nm,c in how_met_items],
+        "n_profs": len(appt_by_prof),
+        "funnel_w": min(100,conv_rate) if total_est>0 else 50,
+    }
+
+
+# ─── RUN ALL PERIODS ──────────────────────────────────────────────────────────
+
+mat_from = (TODAY.replace(day=1) - timedelta(days=365)).replace(day=1)
+mqt_from = (TODAY.replace(day=1) - timedelta(days=90)).replace(day=1)
+ytd_from = TODAY.replace(month=1, day=1)
+
+print("Calculando MAT (12 meses)...")
+mat_data = compute_period("MAT", mat_from.strftime("%Y-%m-%d"), TO_STR)
+print("Calculando MQT (3 meses)...")
+mqt_data = compute_period("MQT", mqt_from.strftime("%Y-%m-%d"), TO_STR)
+print("Calculando YTD (ano atual)...")
+ytd_data = compute_period("YTD", ytd_from.strftime("%Y-%m-%d"), TO_STR)
+
+PERIODS = {"mat": mat_data, "mqt": mqt_data, "ytd": ytd_data}
+gerado_em = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+# ─── HTML ─────────────────────────────────────────────────────────────────────
+html = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Klinik Odontologia</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+:root{{
+  --bg:#0a0f1e;--bg2:#111827;--bg3:#1e293b;--bg4:#0f172a;
+  --border:#1e3a5f;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --blue:#3b82f6;--green:#10b981;--purple:#8b5cf6;--red:#ef4444;
+  --amber:#f59e0b;--cyan:#06b6d4;--pink:#ec4899;--indigo:#6366f1;
+}}
+body{{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}}
+header{{background:linear-gradient(135deg,#0f1f3d 0%,#1a3a6e 60%,#0f2a5a 100%);
+  padding:14px 28px;display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid #1e3a8a44;box-shadow:0 4px 20px #00000055;
+  position:sticky;top:0;z-index:100}}
+header h1{{font-size:1.3rem;font-weight:700}} header h1 span{{color:#60a5fa}}
+.period-badge{{background:#1e3a8a33;border:1px solid #3b82f644;border-radius:20px;padding:4px 12px;font-size:.73rem;color:#93c5fd;display:inline-block;margin-bottom:3px}}
+.updated{{font-size:.67rem;color:#475569;text-align:right}}
+/* TABS + PERIOD BUTTONS */
+.topbar{{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;gap:2px;overflow-x:auto;align-items:center;justify-content:space-between}}
+.tabs{{display:flex;gap:2px;overflow-x:auto;flex:1}}
+.tab{{padding:11px 18px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);font-size:.78rem;font-weight:500;letter-spacing:.3px;white-space:nowrap;transition:all .2s;user-select:none}}
+.tab:hover{{color:var(--text2);background:#1e293b44}}
+.tab.active{{color:var(--blue);border-bottom-color:var(--blue);background:#3b82f611}}
+.period-btns{{display:flex;gap:5px;padding:8px 0 8px 16px;flex-shrink:0;border-left:1px solid var(--border);margin-left:8px}}
+.pbtn{{padding:5px 13px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid #334155;background:transparent;color:var(--text3);transition:all .2s;letter-spacing:.5px}}
+.pbtn:hover{{border-color:var(--blue);color:var(--text)}}
+.pbtn.active{{background:#3b82f622;border-color:var(--blue);color:#60a5fa}}
+/* PANELS */
+.panel{{display:none;padding:20px 28px;max-width:1800px;margin:0 auto}}
+.panel.active{{display:block}}
+.stitle{{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin:20px 0 11px;border-bottom:1px solid #1e293b;padding-bottom:7px;display:flex;align-items:center;gap:8px}}
+.stitle::before{{content:'';width:3px;height:12px;border-radius:2px;background:var(--blue);flex-shrink:0}}
+/* KPI */
+.kpi-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:14px}}
+.kpi{{background:var(--bg3);border:1px solid #334155;border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:transform .15s}}
+.kpi:hover{{transform:translateY(-2px);border-color:#475569}}
+.kpi::before{{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:4px 4px 0 0}}
+.kpi.blue::before{{background:linear-gradient(90deg,#3b82f6,#93c5fd)}}
+.kpi.green::before{{background:linear-gradient(90deg,#10b981,#6ee7b7)}}
+.kpi.purple::before{{background:linear-gradient(90deg,#8b5cf6,#c4b5fd)}}
+.kpi.red::before{{background:linear-gradient(90deg,#ef4444,#fca5a5)}}
+.kpi.amber::before{{background:linear-gradient(90deg,#f59e0b,#fde68a)}}
+.kpi.cyan::before{{background:linear-gradient(90deg,#06b6d4,#67e8f9)}}
+.kpi.indigo::before{{background:linear-gradient(90deg,#6366f1,#a5b4fc)}}
+.kpi label{{font-size:.6rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);display:block;margin-bottom:7px}}
+.kpi .val{{font-size:1.35rem;font-weight:700;line-height:1}}
+.kpi.blue .val{{color:#60a5fa}}.kpi.green .val{{color:#34d399}}.kpi.purple .val{{color:#a78bfa}}
+.kpi.red .val{{color:#f87171}}.kpi.amber .val{{color:#fbbf24}}.kpi.cyan .val{{color:#22d3ee}}.kpi.indigo .val{{color:#818cf8}}
+.kpi .sub{{font-size:.66rem;color:var(--text3);margin-top:5px;display:flex;align-items:center;gap:4px}}
+.badge{{display:inline-block;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:600}}
+.badge.up{{background:#10b98122;color:#34d399}}.badge.dn{{background:#ef444422;color:#f87171}}.badge.fl{{background:#f59e0b22;color:#fbbf24}}
+/* LAYOUTS */
+.g2{{display:grid;grid-template-columns:3fr 2fr;gap:13px;margin-bottom:13px}}
+.g2e{{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}}
+.g3{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px}}
+.g12{{display:grid;grid-template-columns:1fr 2fr;gap:13px;margin-bottom:13px}}
+/* CARDS */
+.card{{background:var(--bg3);border:1px solid #334155;border-radius:12px;padding:17px}}
+.card h3{{font-size:.66rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:13px;display:flex;align-items:center;gap:6px}}
+.card canvas{{max-height:270px}}
+/* HEALTH */
+.health-num{{font-size:3.8rem;font-weight:800;line-height:1;text-align:center}}
+.health-label{{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-top:3px}}
+/* PROGRESS */
+.prog{{background:#0f172a;border-radius:4px;height:7px;overflow:hidden;margin-top:5px}}
+.prog-fill{{height:100%;border-radius:4px;transition:width .4s}}
+/* TABLES */
+.dtable{{width:100%;border-collapse:collapse;font-size:.76rem}}
+.dtable th{{color:var(--text3);font-size:.6rem;text-transform:uppercase;letter-spacing:.6px;padding:7px 9px;border-bottom:1px solid #334155;text-align:left;font-weight:500}}
+.dtable td{{padding:7px 9px;border-bottom:1px solid #1e293b;color:var(--text)}}
+.dtable tr:hover td{{background:#1e293b88}}
+.dtable .num{{text-align:right;font-variant-numeric:tabular-nums}}
+.mini-bar{{background:#0f172a;border-radius:3px;height:5px;overflow:hidden}}
+.mini-bar-fill{{height:100%;border-radius:3px}}
+.tag{{display:inline-block;padding:1px 7px;border-radius:8px;font-size:.64rem}}
+.tag.good{{background:#10b98122;color:#34d399}}.tag.warn{{background:#f59e0b22;color:#fbbf24}}.tag.bad{{background:#ef444422;color:#f87171}}
+.info-row{{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:#0f172a;border-radius:8px;border-left:3px solid;margin-bottom:8px}}
+footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top:1px solid #1e293b;margin-top:8px}}
+@media(max-width:1100px){{.g2{{grid-template-columns:1fr}}.g3{{grid-template-columns:1fr 1fr}}}}
+@media(max-width:760px){{.g2,.g2e,.g3,.g12{{grid-template-columns:1fr}}.panel{{padding:13px}}.topbar{{flex-direction:column;align-items:flex-start}}.period-btns{{border-left:none;padding-left:0;border-top:1px solid var(--border);width:100%;padding-top:8px}}.kpi-grid{{grid-template-columns:repeat(2,1fr)}}}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🦷 <span>Klinik</span> Odontologia</h1>
+    <small style="color:#475569;font-size:.7rem">Dashboard Executivo v2.1</small>
+  </div>
+  <div>
+    <div class="period-badge" id="period-badge">📅 —</div>
+    <div class="updated">Atualizado em {gerado_em}</div>
+  </div>
+</header>
+
+<div class="topbar">
+  <div class="tabs">
+    <div class="tab active"  onclick="sw(0)">⚡ Executivo</div>
+    <div class="tab"         onclick="sw(1)">💰 Financeiro</div>
+    <div class="tab"         onclick="sw(2)">🦷 Clínico</div>
+    <div class="tab"         onclick="sw(3)">📊 Comercial</div>
+    <div class="tab"         onclick="sw(4)">📅 Operacional</div>
+  </div>
+  <div class="period-btns">
+    <button class="pbtn active" data-p="mat" onclick="switchPeriod('mat')">MAT</button>
+    <button class="pbtn"        data-p="mqt" onclick="switchPeriod('mqt')">MQT</button>
+    <button class="pbtn"        data-p="ytd" onclick="switchPeriod('ytd')">YTD</button>
+  </div>
+</div>
+
+<!-- TAB 0 — EXECUTIVO -->
+<div class="panel active" id="p0">
+  <div class="stitle">Resumo Executivo</div>
+  <div class="kpi-grid">
+    <div class="kpi green"><label>Receita Total</label><div class="val" id="kpi-rev">—</div><div class="sub" id="kpi-rev-sub"></div></div>
+    <div class="kpi red"><label>Despesas Totais</label><div class="val" id="kpi-exp">—</div><div class="sub" id="kpi-exp-sub"></div></div>
+    <div class="kpi green" id="kpi-profit-card"><label>Resultado Líquido</label><div class="val" id="kpi-profit">—</div><div class="sub" id="kpi-profit-sub"></div></div>
+    <div class="kpi blue"><label>Produção Aprovada</label><div class="val" id="kpi-prod">—</div><div class="sub" id="kpi-prod-sub"></div></div>
+    <div class="kpi purple"><label>Taxa de Conversão</label><div class="val" id="kpi-conv">—</div><div class="sub" id="kpi-conv-sub"></div></div>
+    <div class="kpi amber"><label>Ticket Médio</label><div class="val" id="kpi-ticket">—</div></div>
+    <div class="kpi cyan"><label>Agendamentos</label><div class="val" id="kpi-appts">—</div></div>
+    <div class="kpi amber" id="kpi-noshow-card"><label>Taxa de No-show</label><div class="val" id="kpi-noshow">—</div><div class="sub" id="kpi-noshow-sub"></div></div>
+  </div>
+
+  <div class="g12">
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <h3>🩺 Saúde do Negócio</h3>
+      <div style="text-align:center;padding:10px 0">
+        <div class="health-num" id="health-num">—</div>
+        <div class="health-label">/ 100</div>
+        <div style="margin-top:8px;font-size:.78rem;font-weight:700;letter-spacing:1px" id="health-label-txt">—</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:.71rem">
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Margem líquida</span><span id="score-margin-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-margin-bar" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Conversão comercial</span><span id="score-conv-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-conv-bar" style="width:0%;background:var(--purple)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Atingimento de metas</span><span id="score-goal-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-goal-bar" style="width:0%;background:var(--amber)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Comparecimento</span><span id="score-noshow-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-noshow-bar" style="width:0%;background:var(--cyan)"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📈 Tendência &amp; Projeção de Receita</h3>
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <div class="g2e">
+    <div class="card">
+      <h3>⚖️ Ponto de Equilíbrio Mensal</h3>
+      <div id="be-content"></div>
+    </div>
+    <div class="card">
+      <h3>🔮 Projeção — Próximos 3 Meses</h3>
+      <div id="proj-content" style="display:flex;flex-direction:column;gap:10px;padding:4px 0"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1 — FINANCEIRO -->
+<div class="panel" id="p1">
+  <div class="stitle">Performance Financeira</div>
+  <div class="kpi-grid">
+    <div class="kpi green"><label>Receita Período</label><div class="val" id="f-rev">—</div><div class="sub" id="f-rev-sub"></div></div>
+    <div class="kpi red"><label>Despesas Período</label><div class="val" id="f-exp">—</div></div>
+    <div class="kpi green" id="f-profit-card"><label>Lucro Líquido</label><div class="val" id="f-profit">—</div><div class="sub" id="f-margin-sub"></div></div>
+    <div class="kpi blue"><label>Receita Média/Mês</label><div class="val" id="f-avg-rev">—</div></div>
+    <div class="kpi amber"><label>Despesa Média/Mês</label><div class="val" id="f-avg-exp">—</div></div>
+    <div class="kpi cyan"><label>Break-even Mensal</label><div class="val" id="f-be">—</div></div>
+  </div>
+  <div class="stitle">Demonstrativo de Resultado</div>
+  <div class="g2">
+    <div class="card"><h3>Receita / Despesa / Resultado por Mês</h3><canvas id="finChart"></canvas></div>
+    <div class="card"><h3>Margem Líquida por Mês (%)</h3><canvas id="marginChart"></canvas></div>
+  </div>
+  <div class="stitle">Estrutura de Custos</div>
+  <div class="g2e">
+    <div class="card"><h3>Despesas por Categoria</h3><canvas id="catChart"></canvas></div>
+    <div class="card">
+      <h3>Ranking de Despesas</h3>
+      <table class="dtable"><thead><tr><th>Categoria</th><th class="num">Total</th><th class="num">%</th><th style="width:100px">Barra</th></tr></thead>
+      <tbody id="exp-rows"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 — CLÍNICO -->
+<div class="panel" id="p2">
+  <div class="stitle">Produção Clínica</div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><label>Produção Aprovada</label><div class="val" id="c-prod">—</div><div class="sub" id="c-prod-sub"></div></div>
+    <div class="kpi green"><label>Ticket Médio</label><div class="val" id="c-ticket">—</div></div>
+    <div class="kpi purple"><label>Especialidades Ativas</label><div class="val" id="c-specs">—</div></div>
+    <div class="kpi amber"><label>Total Agendamentos</label><div class="val" id="c-appts">—</div></div>
+  </div>
+  <div class="stitle">Receita por Especialidade</div>
+  <div class="g2">
+    <div class="card"><h3>Evolução por Especialidade (mês)</h3><canvas id="espChart"></canvas></div>
+    <div class="card">
+      <h3>Ranking de Especialidades</h3>
+      <table class="dtable"><thead><tr><th>Especialidade</th><th class="num">Total</th><th style="width:100px">Share</th></tr></thead>
+      <tbody id="esp-rows"></tbody></table>
+    </div>
+  </div>
+  <div class="stitle">Performance por Profissional</div>
+  <div class="g2e">
+    <div class="card"><h3>Agendamentos por Profissional</h3><canvas id="apptChart"></canvas></div>
+    <div class="card"><h3>Mix de Especialidades (agendamentos)</h3><canvas id="catApptChart"></canvas></div>
+  </div>
+</div>
+
+<!-- TAB 3 — COMERCIAL -->
+<div class="panel" id="p3">
+  <div class="stitle">Funil Comercial</div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><label>Orçamentos Gerados</label><div class="val" id="cm-est">—</div></div>
+    <div class="kpi green"><label>Aprovados</label><div class="val" id="cm-appr">—</div></div>
+    <div class="kpi red"><label>Não Aprovados</label><div class="val" id="cm-rej">—</div></div>
+    <div class="kpi purple"><label>Conversão</label><div class="val" id="cm-conv">—</div></div>
+    <div class="kpi amber"><label>Ticket Médio</label><div class="val" id="cm-ticket">—</div></div>
+    <div class="kpi green"><label>Receita Aprovada</label><div class="val" id="cm-amount">—</div></div>
+  </div>
+  <div class="g2e">
+    <div class="card">
+      <h3>🔻 Funil de Conversão</h3>
+      <div id="funnel-content" style="display:flex;flex-direction:column;gap:10px;padding:12px 0"></div>
+    </div>
+    <div class="card"><h3>Aprovados vs Não Aprovados</h3><canvas id="convChart"></canvas></div>
+  </div>
+  <div class="stitle">Meta vs Realizado</div>
+  <div class="g2">
+    <div class="card"><h3>Meta vs. Realizado por Mês</h3><canvas id="goalChart"></canvas></div>
+    <div class="card">
+      <h3>Atingimento por Mês</h3>
+      <table class="dtable"><thead><tr><th>Mês</th><th class="num">Meta</th><th class="num">Realizado</th><th class="num">%</th><th>Status</th></tr></thead>
+      <tbody id="goal-rows"></tbody></table>
+    </div>
+  </div>
+  <div class="stitle">Captação de Pacientes</div>
+  <div class="card" style="margin-bottom:14px">
+    <h3>Como nos Encontrou</h3><canvas id="howMetChart" style="max-height:220px"></canvas>
+  </div>
+</div>
+
+<!-- TAB 4 — OPERACIONAL -->
+<div class="panel" id="p4">
+  <div class="stitle">Visão Operacional</div>
+  <div class="kpi-grid">
+    <div class="kpi cyan"><label>Total Agendamentos</label><div class="val" id="op-appts">—</div></div>
+    <div class="kpi red"><label>Total Faltas</label><div class="val" id="op-miss">—</div></div>
+    <div class="kpi amber" id="op-noshow-card"><label>Taxa de No-show</label><div class="val" id="op-noshow">—</div></div>
+    <div class="kpi indigo"><label>Dentistas Ativos</label><div class="val" id="op-profs">—</div></div>
+  </div>
+  <div class="g2e">
+    <div class="card"><h3>Volume de Agendamentos por Mês</h3><canvas id="apptMonthChart"></canvas></div>
+    <div class="card"><h3>Faltas por Mês</h3><canvas id="missChart"></canvas></div>
+  </div>
+  <div class="stitle">Performance por Dentista</div>
+  <div class="g2e">
+    <div class="card">
+      <h3>Agendamentos por Dentista</h3>
+      <table class="dtable"><thead><tr><th>Dentista</th><th class="num">Qtd</th><th style="width:100px">Volume</th></tr></thead>
+      <tbody id="appt-rows"></tbody></table>
+    </div>
+    <div class="card"><h3>Canal de Captação</h3><canvas id="howMetChart2"></canvas></div>
+  </div>
+</div>
+
+<footer>Klinik Odontologia — Dashboard Executivo v2.1 — Dados via Clinicorp API — {gerado_em}</footer>
+
+<script>
+const PERIODS = {J(PERIODS)};
+const COLORS  = {J(COLORS)};
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function sw(n){{
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+}}
+
+// ── Formatters ────────────────────────────────────────────────────────────────
+function fmt(v){{
+  if(v==null||isNaN(v)) return 'R$ 0,00';
+  return 'R$ '+Number(v).toLocaleString('pt-BR',{{minimumFractionDigits:2,maximumFractionDigits:2}});
+}}
+function fmtk(v){{
+  if(v==null||isNaN(v)) return 'R$ 0';
+  v=Number(v);
+  if(v>=1e6) return 'R$ '+(v/1e6).toFixed(1)+'M';
+  if(v>=1e3) return 'R$ '+(v/1e3).toFixed(1)+'K';
+  return 'R$ '+Math.round(v);
+}}
+function arr(p){{return p>2?'↑':p<-2?'↓':'→';}}
+function badgeCls(p){{return p>=0?'up':'dn';}}
+
+// ── Text ──────────────────────────────────────────────────────────────────────
+function txt(id,val){{const e=document.getElementById(id);if(e)e.textContent=val;}}
+function html(id,val){{const e=document.getElementById(id);if(e)e.innerHTML=val;}}
+function style(id,prop,val){{const e=document.getElementById(id);if(e)e.style[prop]=val;}}
+
+// ── Chart instances ───────────────────────────────────────────────────────────
+let trendChart,finChart,marginChart,catChart,espChart,apptChart,catApptChart,
+    convChart,goalChart,howMetChart,apptMonthChart,missChart,howMetChart2;
+
+const C='#94a3b8',G1='#1e293b',G2='#334155';
+const scaleR={{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}};
+const scaleN={{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G2}}}};
+const scaleP={{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},grid:{{color:G2}}}};
+const scaleX={{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}};
+const leg={{labels:{{color:C,boxWidth:11,font:{{size:10}}}}}};
+const legR={{position:'right',labels:{{color:C,boxWidth:10,font:{{size:10}}}}}};
+
+function initCharts(){{
+  const d=PERIODS.mat;
+  trendChart=new Chart(document.getElementById('trendChart'),{{type:'line',
+    data:{{labels:d.proj_labels,datasets:[
+      {{label:'Receita',data:d.all_rev_hist,borderColor:'#10b981',backgroundColor:'#10b98122',fill:true,tension:.4,pointRadius:3,spanGaps:false}},
+      {{label:'Despesa',data:d.all_exp_hist,borderColor:'#ef4444',backgroundColor:'#ef444422',fill:false,tension:.4,pointRadius:3,spanGaps:false}},
       {{label:'Proj. Receita',data:d.proj_rev_line,borderColor:'#10b981',borderDash:[7,3],backgroundColor:'transparent',tension:.4,pointRadius:5,pointStyle:'triangle',spanGaps:false}},
       {{label:'Proj. Despesa',data:d.proj_exp_line,borderColor:'#ef4444',borderDash:[7,3],backgroundColor:'transparent',tension:.4,pointRadius:5,pointStyle:'triangle',spanGaps:false}},
     ]}},options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleR}}}}
@@ -379,7 +753,7 @@ function buildEspRows(d){{
 function buildGoalRows(d){{
   return d.goal_labels.map((lb,i)=>{{
     const pct=d.goal_pct[i];
-    const [cls,lbl]=pct>=100?['good','✓ Atingida']:pct>=75?['warm','~ Parcial']:['bad','✗ Abaixo'];
+    const [cls,lbl]=pct>=100?['good','✓ Atingida']:pct>=75?['warn','~ Parcial']:['bad','✗ Abaixo'];
     return `<tr><td>${{lb}}</td><td class="num">${{fmtk(d.goal_targets[i])}}</td>
       <td class="num">${{fmtk(d.goal_actual[i])}}</td><td class="num">${{pct}}%</td>
       <td><span class="tag ${{cls}}">${{lbl}}</span></td></tr>`;
@@ -625,7 +999,7 @@ function renderPeriod(p){{
 
   // ── Tables ──
   html('exp-rows',buildExpRows(d));
-  html('est-rows',buildEspRows(d));
+  html('esp-rows',buildEspRows(d));
   html('goal-rows',buildGoalRows(d));
   html('appt-rows',buildApptRows(d));
 
