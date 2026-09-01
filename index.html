@@ -7,90 +7,691 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
-header{background:linear-gradient(135deg,#1e3a5f,#1a56a5);padding:18px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2563eb33}
-header h1{font-size:1.4rem;font-weight:700} header h1 span{color:#60a5fa}
-.period{background:#1e3a5f;border:1px solid #2563eb44;border-radius:8px;padding:4px 12px;font-size:.8rem;color:#93c5fd}
-.container{padding:22px 28px;max-width:1700px;margin:0 auto}
-.stitle{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:#475569;margin:20px 0 10px;border-bottom:1px solid #1e293b;padding-bottom:6px}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
-.kpi{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;position:relative;overflow:hidden}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.kpi.blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
-.kpi.green::before{background:linear-gradient(90deg,#10b981,#34d399)}
-.kpi.purple::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
-.kpi.red::before{background:linear-gradient(90deg,#ef4444,#f87171)}
-.kpi.amber::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
-.kpi.cyan::before{background:linear-gradient(90deg,#06b6d4,#22d3ee)}
-.kpi label{font-size:.65rem;text-transform:uppercase;letter-spacing:.8px;color:#64748b;display:block;margin-bottom:6px}
-.kpi .val{font-size:1.5rem;font-weight:700}
-.kpi.blue .val{color:#60a5fa} .kpi.green .val{color:#34d399} .kpi.purple .val{color:#a78bfa}
-.kpi.red .val{color:#f87171} .kpi.amber .val{color:#fbbf24} .kpi.cyan .val{color:#22d3ee}
-.kpi .sub{font-size:.7rem;color:#64748b;margin-top:4px}
-.g2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
-.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px}
-.card h3{font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:14px}
-.card canvas{max-height:260px}
-footer{text-align:center;padding:16px;color:#475569;font-size:.72rem;border-top:1px solid #1e293b;margin-top:8px}
-@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}.container{padding:14px}}
+:root{
+  --bg:#0a0f1e;--bg2:#111827;--bg3:#1e293b;--bg4:#0f172a;
+  --border:#1e3a5f;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --blue:#3b82f6;--green:#10b981;--purple:#8b5cf6;--red:#ef4444;
+  --amber:#f59e0b;--cyan:#06b6d4;--pink:#ec4899;--indigo:#6366f1;
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+header{background:linear-gradient(135deg,#0f1f3d 0%,#1a3a6e 60%,#0f2a5a 100%);
+  padding:14px 28px;display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid #1e3a8a44;box-shadow:0 4px 20px #00000055;
+  position:sticky;top:0;z-index:100}
+header h1{font-size:1.3rem;font-weight:700} header h1 span{color:#60a5fa}
+.period-badge{background:#1e3a8a33;border:1px solid #3b82f644;border-radius:20px;padding:4px 12px;font-size:.73rem;color:#93c5fd;display:inline-block;margin-bottom:3px}
+.updated{font-size:.67rem;color:#475569;text-align:right}
+/* TABS + PERIOD BUTTONS */
+.topbar{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;gap:2px;overflow-x:auto;align-items:center;justify-content:space-between}
+.tabs{display:flex;gap:2px;overflow-x:auto;flex:1}
+.tab{padding:11px 18px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);font-size:.78rem;font-weight:500;letter-spacing:.3px;white-space:nowrap;transition:all .2s;user-select:none}
+.tab:hover{color:var(--text2);background:#1e293b44}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);background:#3b82f611}
+.period-btns{display:flex;gap:5px;padding:8px 0 8px 16px;flex-shrink:0;border-left:1px solid var(--border);margin-left:8px}
+.pbtn{padding:5px 13px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid #334155;background:transparent;color:var(--text3);transition:all .2s;letter-spacing:.5px}
+.pbtn:hover{border-color:var(--blue);color:var(--text)}
+.pbtn.active{background:#3b82f622;border-color:var(--blue);color:#60a5fa}
+/* PANELS */
+.panel{display:none;padding:20px 28px;max-width:1800px;margin:0 auto}
+.panel.active{display:block}
+.stitle{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin:20px 0 11px;border-bottom:1px solid #1e293b;padding-bottom:7px;display:flex;align-items:center;gap:8px}
+.stitle::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--blue);flex-shrink:0}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:14px}
+.kpi{background:var(--bg3);border:1px solid #334155;border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:transform .15s}
+.kpi:hover{transform:translateY(-2px);border-color:#475569}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:4px 4px 0 0}
+.kpi.blue::before{background:linear-gradient(90deg,#3b82f6,#93c5fd)}
+.kpi.green::before{background:linear-gradient(90deg,#10b981,#6ee7b7)}
+.kpi.purple::before{background:linear-gradient(90deg,#8b5cf6,#c4b5fd)}
+.kpi.red::before{background:linear-gradient(90deg,#ef4444,#fca5a5)}
+.kpi.amber::before{background:linear-gradient(90deg,#f59e0b,#fde68a)}
+.kpi.cyan::before{background:linear-gradient(90deg,#06b6d4,#67e8f9)}
+.kpi.indigo::before{background:linear-gradient(90deg,#6366f1,#a5b4fc)}
+.kpi label{font-size:.6rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);display:block;margin-bottom:7px}
+.kpi .val{font-size:1.35rem;font-weight:700;line-height:1}
+.kpi.blue .val{color:#60a5fa}.kpi.green .val{color:#34d399}.kpi.purple .val{color:#a78bfa}
+.kpi.red .val{color:#f87171}.kpi.amber .val{color:#fbbf24}.kpi.cyan .val{color:#22d3ee}.kpi.indigo .val{color:#818cf8}
+.kpi .sub{font-size:.66rem;color:var(--text3);margin-top:5px;display:flex;align-items:center;gap:4px}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:600}
+.badge.up{background:#10b98122;color:#34d399}.badge.dn{background:#ef444422;color:#f87171}.badge.fl{background:#f59e0b22;color:#fbbf24}
+/* LAYOUTS */
+.g2{display:grid;grid-template-columns:3fr 2fr;gap:13px;margin-bottom:13px}
+.g2e{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:13px;margin-bottom:13px}
+/* CARDS */
+.card{background:var(--bg3);border:1px solid #334155;border-radius:12px;padding:17px}
+.card h3{font-size:.66rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:13px;display:flex;align-items:center;gap:6px}
+.card canvas{max-height:270px}
+/* HEALTH */
+.health-num{font-size:3.8rem;font-weight:800;line-height:1;text-align:center}
+.health-label{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-top:3px}
+/* PROGRESS */
+.prog{background:#0f172a;border-radius:4px;height:7px;overflow:hidden;margin-top:5px}
+.prog-fill{height:100%;border-radius:4px;transition:width .4s}
+/* TABLES */
+.dtable{width:100%;border-collapse:collapse;font-size:.76rem}
+.dtable th{color:var(--text3);font-size:.6rem;text-transform:uppercase;letter-spacing:.6px;padding:7px 9px;border-bottom:1px solid #334155;text-align:left;font-weight:500}
+.dtable td{padding:7px 9px;border-bottom:1px solid #1e293b;color:var(--text)}
+.dtable tr:hover td{background:#1e293b88}
+.dtable .num{text-align:right;font-variant-numeric:tabular-nums}
+.mini-bar{background:#0f172a;border-radius:3px;height:5px;overflow:hidden}
+.mini-bar-fill{height:100%;border-radius:3px}
+.tag{display:inline-block;padding:1px 7px;border-radius:8px;font-size:.64rem}
+.tag.good{background:#10b98122;color:#34d399}.tag.warn{background:#f59e0b22;color:#fbbf24}.tag.bad{background:#ef444422;color:#f87171}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:#0f172a;border-radius:8px;border-left:3px solid;margin-bottom:8px}
+footer{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top:1px solid #1e293b;margin-top:8px}
+@media(max-width:1100px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.g2,.g2e,.g3,.g12{grid-template-columns:1fr}.panel{padding:13px}.topbar{flex-direction:column;align-items:flex-start}.period-btns{border-left:none;padding-left:0;border-top:1px solid var(--border);width:100%;padding-top:8px}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
+
 <header>
-  <div><h1>🦷 <span>Klinik</span> Odontologia</h1><small style="color:#94a3b8;font-size:.75rem">Dashboard Operacional</small></div>
-  <div style="text-align:right">
-    <div class="period">📅 2026-05-01 → 2026-08-31</div>
-    <small style="color:#475569;font-size:.72rem;margin-top:4px;display:block">Atualizado 31/08/2026 16:34</small>
+  <div>
+    <h1>🦷 <span>Klinik</span> Odontologia</h1>
+    <small style="color:#475569;font-size:.7rem">Dashboard Executivo v2.1</small>
+  </div>
+  <div>
+    <div class="period-badge" id="period-badge">📅 —</div>
+    <div class="updated">Atualizado em 01/09/2026 14:35</div>
   </div>
 </header>
-<div class="container">
-  <div class="stitle">Resumo Financeiro do Período</div>
+
+<div class="topbar">
+  <div class="tabs">
+    <div class="tab active"  onclick="sw(0)">⚡ Executivo</div>
+    <div class="tab"         onclick="sw(1)">💰 Financeiro</div>
+    <div class="tab"         onclick="sw(2)">🦷 Clínico</div>
+    <div class="tab"         onclick="sw(3)">📊 Comercial</div>
+    <div class="tab"         onclick="sw(4)">📅 Operacional</div>
+  </div>
+  <div class="period-btns">
+    <button class="pbtn active" data-p="mat" onclick="switchPeriod('mat')">MAT</button>
+    <button class="pbtn"        data-p="mqt" onclick="switchPeriod('mqt')">MQT</button>
+    <button class="pbtn"        data-p="ytd" onclick="switchPeriod('ytd')">YTD</button>
+  </div>
+</div>
+
+<!-- TAB 0 — EXECUTIVO -->
+<div class="panel active" id="p0">
+  <div class="stitle">Resumo Executivo</div>
   <div class="kpi-grid">
-    <div class="kpi green"><label>Receita Total</label><div class="val">R$ 323.479,53</div><div class="sub">4 meses</div></div>
-    <div class="kpi red"><label>Despesas Totais</label><div class="val">R$ 195.413,51</div></div>
-    <div class="kpi green"><label>Resultado Líquido</label><div class="val">R$ 128.066,02</div><div class="sub">Margem 39.6%</div></div>
-    <div class="kpi blue"><label>Produção Aprovada</label><div class="val">R$ 0,00</div><div class="sub">0 orçamentos</div></div>
-    <div class="kpi purple"><label>Taxa de Conversão</label><div class="val">0%</div><div class="sub">de 0 orçamentos</div></div>
-    <div class="kpi amber"><label>Ticket Médio</label><div class="val">R$ 0,00</div></div>
-    <div class="kpi cyan"><label>Agendamentos</label><div class="val">1,863</div></div>
-    <div class="kpi red"><label>Faltas no Período</label><div class="val">394</div></div>
+    <div class="kpi green"><label>Receita Total</label><div class="val" id="kpi-rev">—</div><div class="sub" id="kpi-rev-sub"></div></div>
+    <div class="kpi red"><label>Despesas Totais</label><div class="val" id="kpi-exp">—</div><div class="sub" id="kpi-exp-sub"></div></div>
+    <div class="kpi green" id="kpi-profit-card"><label>Resultado Líquido</label><div class="val" id="kpi-profit">—</div><div class="sub" id="kpi-profit-sub"></div></div>
+    <div class="kpi blue"><label>Produção Aprovada</label><div class="val" id="kpi-prod">—</div><div class="sub" id="kpi-prod-sub"></div></div>
+    <div class="kpi purple"><label>Taxa de Conversão</label><div class="val" id="kpi-conv">—</div><div class="sub" id="kpi-conv-sub"></div></div>
+    <div class="kpi amber"><label>Ticket Médio</label><div class="val" id="kpi-ticket">—</div></div>
+    <div class="kpi cyan"><label>Agendamentos</label><div class="val" id="kpi-appts">—</div></div>
+    <div class="kpi amber" id="kpi-noshow-card"><label>Taxa de No-show</label><div class="val" id="kpi-noshow">—</div><div class="sub" id="kpi-noshow-sub"></div></div>
   </div>
-  <div class="stitle">Faturamento Mensal</div>
-  <div class="g2">
-    <div class="card"><h3>Receita / Despesa / Resultado por Mês</h3><canvas id="finChart"></canvas></div>
-    <div class="card"><h3>Despesas por Categoria</h3><canvas id="catChart"></canvas></div>
-  </div>
-  <div class="stitle">Produção Clínica</div>
-  <div class="g2">
-    <div class="card"><h3>Produção por Especialidade (mês)</h3><canvas id="espChart"></canvas></div>
-    <div class="card" style="display:grid;grid-template-rows:1fr 1fr;gap:16px">
-      <div><h3>Conversão de Orçamentos</h3><canvas id="convChart" style="max-height:130px"></canvas></div>
-      <div><h3>Meta vs. Realizado</h3><canvas id="goalChart" style="max-height:130px"></canvas></div>
+
+  <div class="g12">
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <h3>🩺 Saúde do Negócio</h3>
+      <div style="text-align:center;padding:10px 0">
+        <div class="health-num" id="health-num">—</div>
+        <div class="health-label">/ 100</div>
+        <div style="margin-top:8px;font-size:.78rem;font-weight:700;letter-spacing:1px" id="health-label-txt">—</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:.71rem">
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Margem líquida</span><span id="score-margin-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-margin-bar" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Conversão comercial</span><span id="score-conv-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-conv-bar" style="width:0%;background:var(--purple)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Atingimento de metas</span><span id="score-goal-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-goal-bar" style="width:0%;background:var(--amber)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Comparecimento</span><span id="score-noshow-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-noshow-bar" style="width:0%;background:var(--cyan)"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📈 Tendência &amp; Projeção de Receita</h3>
+      <canvas id="trendChart"></canvas>
     </div>
   </div>
-  <div class="stitle">Agenda & Captação</div>
-  <div class="g3">
-    <div class="card"><h3>Agendamentos por Profissional</h3><canvas id="apptChart"></canvas></div>
-    <div class="card"><h3>Agendamentos por Especialidade</h3><canvas id="catApptChart"></canvas></div>
-    <div class="card"><h3>Como nos Encontrou</h3><canvas id="howMetChart"></canvas></div>
+
+  <div class="g2e">
+    <div class="card">
+      <h3>⚖️ Ponto de Equilíbrio Mensal</h3>
+      <div id="be-content"></div>
+    </div>
+    <div class="card">
+      <h3>🔮 Projeção — Próximos 3 Meses</h3>
+      <div id="proj-content" style="display:flex;flex-direction:column;gap:10px;padding:4px 0"></div>
+    </div>
   </div>
-  <div class="stitle">Faltas</div>
-  <div class="card" style="margin-bottom:20px"><h3>Faltas por Mês</h3><canvas id="missChart" style="max-height:180px"></canvas></div>
 </div>
-<footer>Klinik Odontologia • Dados via API Clinicorp • Gerado em 31/08/2026 16:34 UTC</footer>
+
+<!-- TAB 1 — FINANCEIRO -->
+<div class="panel" id="p1">
+  <div class="stitle">Performance Financeira</div>
+  <div class="kpi-grid">
+    <div class="kpi green"><label>Receita Período</label><div class="val" id="f-rev">—</div><div class="sub" id="f-rev-sub"></div></div>
+    <div class="kpi red"><label>Despesas Período</label><div class="val" id="f-exp">—</div></div>
+    <div class="kpi green" id="f-profit-card"><label>Lucro Líquido</label><div class="val" id="f-profit">—</div><div class="sub" id="f-margin-sub"></div></div>
+    <div class="kpi blue"><label>Receita Média/Mês</label><div class="val" id="f-avg-rev">—</div></div>
+    <div class="kpi amber"><label>Despesa Média/Mês</label><div class="val" id="f-avg-exp">—</div></div>
+    <div class="kpi cyan"><label>Break-even Mensal</label><div class="val" id="f-be">—</div></div>
+  </div>
+  <div class="stitle">Demonstrativo de Resultado</div>
+  <div class="g2">
+    <div class="card"><h3>Receita / Despesa / Resultado por Mês</h3><canvas id="finChart"></canvas></div>
+    <div class="card"><h3>Margem Líquida por Mês (%)</h3><canvas id="marginChart"></canvas></div>
+  </div>
+  <div class="stitle">Estrutura de Custos</div>
+  <div class="g2e">
+    <div class="card"><h3>Despesas por Categoria</h3><canvas id="catChart"></canvas></div>
+    <div class="card">
+      <h3>Ranking de Despesas</h3>
+      <table class="dtable"><thead><tr><th>Categoria</th><th class="num">Total</th><th class="num">%</th><th style="width:100px">Barra</th></tr></thead>
+      <tbody id="exp-rows"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 — CLÍNICO -->
+<div class="panel" id="p2">
+  <div class="stitle">Produção Clínica</div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><label>Produção Aprovada</label><div class="val" id="c-prod">—</div><div class="sub" id="c-prod-sub"></div></div>
+    <div class="kpi green"><label>Ticket Médio</label><div class="val" id="c-ticket">—</div></div>
+    <div class="kpi purple"><label>Especialidades Ativas</label><div class="val" id="c-specs">—</div></div>
+    <div class="kpi amber"><label>Total Agendamentos</label><div class="val" id="c-appts">—</div></div>
+  </div>
+  <div class="stitle">Receita por Especialidade</div>
+  <div class="g2">
+    <div class="card"><h3>Evolução por Especialidade (mês)</h3><canvas id="espChart"></canvas></div>
+    <div class="card">
+      <h3>Ranking de Especialidades</h3>
+      <table class="dtable"><thead><tr><th>Especialidade</th><th class="num">Total</th><th style="width:100px">Share</th></tr></thead>
+      <tbody id="esp-rows"></tbody></table>
+    </div>
+  </div>
+  <div class="stitle">Performance por Profissional</div>
+  <div class="g2e">
+    <div class="card"><h3>Agendamentos por Profissional</h3><canvas id="apptChart"></canvas></div>
+    <div class="card"><h3>Mix de Especialidades (agendamentos)</h3><canvas id="catApptChart"></canvas></div>
+  </div>
+</div>
+
+<!-- TAB 3 — COMERCIAL -->
+<div class="panel" id="p3">
+  <div class="stitle">Funil Comercial</div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><label>Orçamentos Gerados</label><div class="val" id="cm-est">—</div></div>
+    <div class="kpi green"><label>Aprovados</label><div class="val" id="cm-appr">—</div></div>
+    <div class="kpi red"><label>Não Aprovados</label><div class="val" id="cm-rej">—</div></div>
+    <div class="kpi purple"><label>Conversão</label><div class="val" id="cm-conv">—</div></div>
+    <div class="kpi amber"><label>Ticket Médio</label><div class="val" id="cm-ticket">—</div></div>
+    <div class="kpi green"><label>Receita Aprovada</label><div class="val" id="cm-amount">—</div></div>
+  </div>
+  <div class="g2e">
+    <div class="card">
+      <h3>🔻 Funil de Conversão</h3>
+      <div id="funnel-content" style="display:flex;flex-direction:column;gap:10px;padding:12px 0"></div>
+    </div>
+    <div class="card"><h3>Aprovados vs Não Aprovados</h3><canvas id="convChart"></canvas></div>
+  </div>
+  <div class="stitle">Meta vs Realizado</div>
+  <div class="g2">
+    <div class="card"><h3>Meta vs. Realizado por Mês</h3><canvas id="goalChart"></canvas></div>
+    <div class="card">
+      <h3>Atingimento por Mês</h3>
+      <table class="dtable"><thead><tr><th>Mês</th><th class="num">Meta</th><th class="num">Realizado</th><th class="num">%</th><th>Status</th></tr></thead>
+      <tbody id="goal-rows"></tbody></table>
+    </div>
+  </div>
+  <div class="stitle">Captação de Pacientes</div>
+  <div class="card" style="margin-bottom:14px">
+    <h3>Como nos Encontrou</h3><canvas id="howMetChart" style="max-height:220px"></canvas>
+  </div>
+</div>
+
+<!-- TAB 4 — OPERACIONAL -->
+<div class="panel" id="p4">
+  <div class="stitle">Visão Operacional</div>
+  <div class="kpi-grid">
+    <div class="kpi cyan"><label>Total Agendamentos</label><div class="val" id="op-appts">—</div></div>
+    <div class="kpi red"><label>Total Faltas</label><div class="val" id="op-miss">—</div></div>
+    <div class="kpi amber" id="op-noshow-card"><label>Taxa de No-show</label><div class="val" id="op-noshow">—</div></div>
+    <div class="kpi indigo"><label>Dentistas Ativos</label><div class="val" id="op-profs">—</div></div>
+  </div>
+  <div class="g2e">
+    <div class="card"><h3>Volume de Agendamentos por Mês</h3><canvas id="apptMonthChart"></canvas></div>
+    <div class="card"><h3>Faltas por Mês</h3><canvas id="missChart"></canvas></div>
+  </div>
+  <div class="stitle">Performance por Dentista</div>
+  <div class="g2e">
+    <div class="card">
+      <h3>Agendamentos por Dentista</h3>
+      <table class="dtable"><thead><tr><th>Dentista</th><th class="num">Qtd</th><th style="width:100px">Volume</th></tr></thead>
+      <tbody id="appt-rows"></tbody></table>
+    </div>
+    <div class="card"><h3>Canal de Captação</h3><canvas id="howMetChart2"></canvas></div>
+  </div>
+</div>
+
+<footer>Klinik Odontologia — Dashboard Executivo v2.1 — Dados via Clinicorp API — 01/09/2026 14:35</footer>
+
 <script>
-const G={responsive:true,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:12,font:{size:11}}}},scales:{x:{ticks:{color:'#64748b',font:{size:11}},grid:{color:'#1e293b'}},y:{ticks:{color:'#64748b',font:{size:11},callback:v=>'R$'+v.toLocaleString('pt-BR')},grid:{color:'#334155'}}}};
-const GP={...G,scales:{...G.scales,y:{ticks:{color:'#64748b',font:{size:11}},grid:{color:'#334155'}}}};
-new Chart(document.getElementById('finChart'),{type:'bar',data:{labels:["2026-05", "2026-06", "2026-07", "2026-08"],datasets:[{label:'Receita',data:[65801.15, 68515.84, 112573.72, 76588.82],backgroundColor:'#3b82f633',borderColor:'#3b82f6',borderWidth:2},{label:'Despesa',data:[45055.71, 45152.83, 54892.94, 50312.03],backgroundColor:'#ef444433',borderColor:'#ef4444',borderWidth:2},{label:'Resultado',data:[20745.44, 23363.01, 57680.78, 26276.79],type:'line',borderColor:'#10b981',backgroundColor:'#10b98122',fill:true,tension:.4,yAxisID:'y'}]},options:{...G,interaction:{mode:'index',intersect:false}}});
-new Chart(document.getElementById('catChart'),{type:'bar',data:{labels:["Empr\u00e9stimo", "COMISS\u00c3O", "Cadastro de Fornecedores", "Funcion\u00e1rios", "Aluguel", "Fornecedores", "Materiais", "Impostos", "Software", "CRO"],datasets:[{label:'R$',data:[40456.67, 36758.01, 29439.2, 27677.88, 25135.59, 20506.24, 6050.87, 5285.21, 2136.8, 1459.44],backgroundColor:['#ef444455','#f59e0b55','#8b5cf655','#ef444444','#f97316aa','#ec4899aa','#06b6d4aa','#84cc16aa','#6366f1aa','#14b8a6aa'],borderColor:['#ef4444','#f59e0b','#8b5cf6','#ef4444','#f97316','#ec4899','#06b6d4','#84cc16','#6366f1','#14b8a6'],borderWidth:2}]},options:{...G,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',callback:v=>'R$'+v.toLocaleString('pt-BR')},grid:{color:'#334155'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}}}});
-new Chart(document.getElementById('espChart'),{type:'line',data:{labels:["May", "June", "July", "August"],datasets:[{"label": "CIRURGIA", "data": [145.29, 6960.74, 1890.42, 478.53], "backgroundColor": "#6366f133", "borderColor": "#6366f1", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "DENT\u00cdSTICA", "data": [4094.04, 9104.79, 14352.45, 7312.31], "backgroundColor": "#10b98133", "borderColor": "#10b981", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "ENDODONTIA", "data": [5133.5, 8108.43, 14955.28, 7733.93], "backgroundColor": "#f59e0b33", "borderColor": "#f59e0b", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "IMPLANTES", "data": [3123.18, 11117.88, 32326.11, 24089.97], "backgroundColor": "#ef444433", "borderColor": "#ef4444", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "ODONTOPEDIATRIA", "data": [56.18, 1551.09, 1114, 0], "backgroundColor": "#8b5cf633", "borderColor": "#8b5cf6", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "ORTODONTIA", "data": [5663.78, 12036.32, 11126.86, 16791.6], "backgroundColor": "#14b8a633", "borderColor": "#14b8a6", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "PERIODONTIA", "data": [3997.18, 3608.92, 8365.6, 5732.48], "backgroundColor": "#f9731633", "borderColor": "#f97316", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "PR\u00d3TESE", "data": [0, 5800, 18630, 11060], "backgroundColor": "#ec489933", "borderColor": "#ec4899", "fill": false, "tension": 0.4, "pointRadius": 4}, {"label": "Periodontia", "data": [3768, 1852.67, 6013, 3390], "backgroundColor": "#06b6d433", "borderColor": "#06b6d4", "fill": false, "tension": 0.4, "pointRadius": 4}]},options:{...G,interaction:{mode:'index',intersect:false}}});
-new Chart(document.getElementById('convChart'),{type:'doughnut',data:{labels:['Aprovados','Não aprovados'],datasets:[{data:[0, 0],backgroundColor:['#10b98199','#ef444466'],borderColor:['#10b981','#ef4444'],borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:10,font:{size:10}}}}}});
-new Chart(document.getElementById('goalChart'),{type:'bar',data:{labels:["May", "June", "July", "August"],datasets:[{label:'Meta',data:[0, 0, 0, 0],backgroundColor:'#3b82f622',borderColor:'#3b82f6',borderWidth:2},{label:'Realizado',data:[65801.15000000001, 68515.84, 112573.72000000003, 76588.82000000002],backgroundColor:'#10b98155',borderColor:'#10b981',borderWidth:2}]},options:{...G}});
-new Chart(document.getElementById('apptChart'),{type:'bar',data:{labels:["ADRIELI ARAUJO DE ALMEIDA", "BARBARA CASARI LAURETTI", "MAISA KEFFLER CANDIA", "CAROLINE SILVA PREUS", "FERNANDA PANGONI SOARES", "LIVIA HELENA RIFON GARCIA", "NELSON TALATOCI OSHIRO FILHO", "JO\u00c3O PAULO SCHUSSLER"],datasets:[{label:'Agendamentos',data:[819, 258, 254, 229, 207, 52, 23, 21],backgroundColor:'#8b5cf655',borderColor:'#8b5cf6',borderWidth:2}]},options:{...GP,indexAxis:'y',plugins:{legend:{display:false}}}});
-new Chart(document.getElementById('catApptChart'),{type:'doughnut',data:{labels:["Manuten\u00e7\u00e3o ", "Avalia\u00e7\u00e3o", "Restaura\u00e7\u00e3o", "Retorno", "Profilaxia", "CONSULTA", "PARTICULAR", "Endodontia"],datasets:[{data:[410, 332, 238, 183, 162, 120, 106, 99],backgroundColor:['#6366f199','#10b98199','#f59e0b99','#ef444499','#8b5cf699','#14b8a699','#f9731699','#ec489999'],borderWidth:1}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:10,font:{size:10}}}}}});
-new Chart(document.getElementById('howMetChart'),{type:'bar',data:{labels:["N\u00e3o informado", "Plano/Conv\u00eanio", "Outros", "Indicado por", "Placa", "Google"],datasets:[{label:'Pacientes',data:[1813, 36, 6, 6, 1, 1],backgroundColor:'#06b6d455',borderColor:'#06b6d4',borderWidth:2}]},options:{...GP,indexAxis:'y',plugins:{legend:{display:false}}}});
-new Chart(document.getElementById('missChart'),{type:'bar',data:{labels:["May", "June", "July", "August"],datasets:[{label:'Faltas',data:[103, 107, 93, 91],backgroundColor:'#f59e0b55',borderColor:'#f59e0b',borderWidth:2}]},options:{...GP}});
+const PERIODS = {"mat": {"label": "MAT", "from": "2025-09-01", "to": "2026-09-01", "n_months": 13, "total_rev": 800884.94, "total_exp": 595963.41, "total_profit": 204921.53, "margin_pct": 25.6, "total_amount": 0.0, "total_appr": 0, "total_rej": 0, "total_est": 0, "conv_rate": 0, "avg_ticket": 0.0, "total_appts": 0, "total_misses": 1179, "noshow_rate": 100.0, "health_score": 18, "health_color": "#ef4444", "mom_rev_pct": -94.2, "mom_exp_pct": -100.0, "avg_goal_pct": 0.0, "breakeven": 38387.02, "avg_fixed_mo": 26060.06, "avg_monthly_rev": 61606.53, "avg_monthly_exp": 45843.34, "be_coverage": 100, "be_margin": 23219.51, "margin_score": 51, "conv_score": 0, "goal_score": 0, "noshow_score": 0, "fin_labels": ["2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"], "fin_rev": [66844.21, 62461.53, 35035.08, 77530.1, 35750.18, 50455.68, 90875.86, 53012.64, 65801.15, 68515.84, 112573.72, 77548.95, 4480.0], "fin_exp": [44706.67, 45106.52, 56870.95, 55360.9, 55384.09, 47984.11, 46650.83, 46103.8, 45055.71, 45152.83, 54892.94, 52694.06, 0.0], "fin_profit": [22137.54, 17355.01, -21835.87, 22169.2, -19633.91, 2471.57, 44225.03, 6908.84, 20745.44, 23363.01, 57680.78, 24854.89, 4480.0], "fin_margin": [33.1, 27.8, -62.3, 28.6, -54.9, 4.9, 48.7, 13.0, 31.5, 34.1, 51.2, 32.1, 100.0], "proj_labels": ["2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"], "all_rev_hist": [66844.21, 62461.53, 35035.08, 77530.1, 35750.18, 50455.68, 90875.86, 53012.64, 65801.15, 68515.84, 112573.72, 77548.95, 4480.0, null, null, null], "all_exp_hist": [44706.67, 45106.52, 56870.95, 55360.9, 55384.09, 47984.11, 46650.83, 46103.8, 45055.71, 45152.83, 54892.94, 52694.06, 0.0, null, null, null], "proj_rev_line": [null, null, null, null, null, null, null, null, null, null, null, null, null, 63415.09, 63673.46, 63931.82], "proj_exp_line": [null, null, null, null, null, null, null, null, null, null, null, null, null, 34636.58, 33035.62, 31434.65], "proj_months": ["2026-10", "2026-11", "2026-12"], "proj_rev": [63415.09, 63673.46, 63931.82], "proj_exp": [34636.58, 33035.62, 31434.65], "proj_profit": [28778.51, 30637.84, 32497.17], "cat_labels": ["Empréstimo", "Funcionários", "COMISSÃO", "Fornecedores", "Aluguel", "Materiais", "Cadastro de Fornecedores", "Impostos", "PRÓ LABORE", "Outros", "Software", "Laboratório"], "cat_vals": [127743.51, 102984.69, 99038.21, 92004.27, 74670.8, 37870.25, 29439.2, 17714.14, 4568.4, 4017.3, 2136.8, 1970.0], "esp_month_labels": ["September", "October", "November", "December", "January", "February", "March", "April", "May", "June", "July", "August"], "esp_datasets": [{"label": "CIRURGIA", "data": [145.2, 325.2, 271.2, 763.8, 126.86, 177.37, 358.11, 1149.39, 145.29, 6960.74, 1890.42, 478.53], "backgroundColor": "#6366f133", "borderColor": "#6366f1", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "DENTÍSTICA", "data": [4954.52, 4192.85, 5543.22, 3787.64, 3465.54, 2928.58, 3285.97, 4398.15, 4094.04, 9104.79, 14352.45, 7845.04], "backgroundColor": "#10b98133", "borderColor": "#10b981", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ENDODONTIA", "data": [5196.87, 3220.24, 3861.08, 2408.56, 1595.84, 2516.86, 5214.92, 3532.58, 5133.5, 8108.43, 14955.28, 7733.93], "backgroundColor": "#f59e0b33", "borderColor": "#f59e0b", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "IMPLANTES", "data": [0.0, 0.0, 0.0, 1075.66, 0.0, 1085.23, 1041.06, 2082.12, 3123.18, 11117.88, 32326.11, 24089.97], "backgroundColor": "#ef444433", "borderColor": "#ef4444", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ODONTOPEDIATRIA", "data": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 56.18, 1551.09, 1114.0, 0.0], "backgroundColor": "#8b5cf633", "borderColor": "#8b5cf6", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ORTODONTIA", "data": [2645.82, 3002.7, 3954.9, 3805.68, 3385.18, 2730.62, 2902.38, 4951.14, 5663.78, 12036.32, 11126.86, 16791.6], "backgroundColor": "#14b8a633", "borderColor": "#14b8a6", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "PERIODONTIA", "data": [4694.8, 3008.04, 3294.68, 2378.26, 4741.76, 3977.02, 3971.42, 3559.26, 3997.18, 3608.92, 8365.6, 6159.88], "backgroundColor": "#f9731633", "borderColor": "#f97316", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "PRÓTESE", "data": [4480.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5800.0, 18630.0, 11060.0], "backgroundColor": "#ec489933", "borderColor": "#ec4899", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "Periodontia", "data": [2205.0, 2875.0, 2220.0, 4707.5, 3042.78, 1275.0, 1780.0, 4395.0, 3768.0, 1852.67, 6013.0, 3390.0], "backgroundColor": "#06b6d433", "borderColor": "#06b6d4", "fill": false, "tension": 0.4, "pointRadius": 3}], "top_esp": [{"name": "IMPLANTES", "val": 75941.21}, {"name": "ORTODONTIA", "val": 72996.98}, {"name": "DENTÍSTICA", "val": 67952.79}, {"name": "ENDODONTIA", "val": 63478.09}, {"name": "PERIODONTIA", "val": 51756.82}, {"name": "PRÓTESE", "val": 39970.0}, {"name": "Periodontia ", "val": 37523.95}, {"name": "CIRURGIA", "val": 12792.11}, {"name": "ODONTOPEDIATRIA", "val": 2721.27}], "max_esp_val": 75941.21, "n_specs": 9, "goal_labels": ["Septemb", "October", "Novembe", "Decembe", "January", "Februar", "March", "April", "May", "June", "July", "August", "Septemb"], "goal_targets": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "goal_actual": [66844.21, 62461.53, 35035.079999999994, 77530.10000000002, 35750.18, 50455.67999999999, 90875.86000000002, 53012.64, 65801.15000000001, 68515.84, 112573.72000000003, 77548.95000000003, 4480.0], "goal_pct": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "miss_labels": ["Septemb", "October", "Novembe", "Decembe", "January", "Februar", "March", "April", "May", "June", "July", "August", "Septemb"], "miss_vals": [96, 99, 99, 78, 91, 99, 110, 107, 103, 107, 93, 92, 5], "appt_month_labels": [], "appt_month_vals": [], "appt_prof": [], "appt_cat": [], "how_met": [], "n_profs": 0, "funnel_w": 50}, "mqt": {"label": "MQT", "from": "2026-06-01", "to": "2026-09-01", "n_months": 4, "total_rev": 263118.51, "total_exp": 152739.83, "total_profit": 110378.68, "margin_pct": 42.0, "total_amount": 263118.51, "total_appr": 1922, "total_rej": 1797, "total_est": 3719, "conv_rate": 51.7, "avg_ticket": 136.9, "total_appts": 1456, "total_misses": 297, "noshow_rate": 16.9, "health_score": 51, "health_color": "#f59e0b", "mom_rev_pct": -94.2, "mom_exp_pct": -100.0, "avg_goal_pct": 0.0, "breakeven": 32820.17, "avg_fixed_mo": 27478.06, "avg_monthly_rev": 65779.63, "avg_monthly_exp": 38184.96, "be_coverage": 100, "be_margin": 32959.46, "margin_score": 84, "conv_score": 78, "goal_score": 0, "noshow_score": 16, "fin_labels": ["2026-06", "2026-07", "2026-08", "2026-09"], "fin_rev": [68515.84, 112573.72, 77548.95, 4480.0], "fin_exp": [45152.83, 54892.94, 52694.06, 0.0], "fin_profit": [23363.01, 57680.78, 24854.89, 4480.0], "fin_margin": [34.1, 51.2, 32.1, 100.0], "proj_labels": ["2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"], "all_rev_hist": [68515.84, 112573.72, 77548.95, 4480.0, null, null, null], "all_exp_hist": [45152.83, 54892.94, 52694.06, 0.0, null, null, null], "proj_rev_line": [null, null, null, null, 8996.56, 0, 0], "proj_exp_line": [null, null, null, null, 3770.62, 0, 0], "proj_months": ["2026-10", "2026-11", "2026-12"], "proj_rev": [8996.56, 0, 0], "proj_exp": [3770.62, 0, 0], "proj_profit": [5225.94, 0, 0], "cat_labels": ["Empréstimo", "Cadastro de Fornecedores", "Funcionários", "COMISSÃO", "Aluguel", "Fornecedores", "Materiais", "Impostos", "Software", "CRO", "PRÓ LABORE"], "cat_vals": [34277.04, 29265.82, 24220.28, 23809.2, 18917.7, 9302.26, 4760.99, 4447.56, 2136.8, 1094.58, 507.6], "esp_month_labels": ["June", "July", "August", "September"], "esp_datasets": [{"label": "CIRURGIA", "data": [6960.74, 1890.42, 478.53, 0.0], "backgroundColor": "#6366f133", "borderColor": "#6366f1", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "DENTÍSTICA", "data": [9104.79, 14352.45, 7845.04, 0.0], "backgroundColor": "#10b98133", "borderColor": "#10b981", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ENDODONTIA", "data": [8108.43, 14955.28, 7733.93, 0.0], "backgroundColor": "#f59e0b33", "borderColor": "#f59e0b", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "IMPLANTES", "data": [11117.88, 32326.11, 24089.97, 0.0], "backgroundColor": "#ef444433", "borderColor": "#ef4444", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ODONTOPEDIATRIA", "data": [1551.09, 1114.0, 0.0, 0.0], "backgroundColor": "#8b5cf633", "borderColor": "#8b5cf6", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ORTODONTIA", "data": [12036.32, 11126.86, 16791.6, 0.0], "backgroundColor": "#14b8a633", "borderColor": "#14b8a6", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "PERIODONTIA", "data": [3608.92, 8365.6, 6159.88, 0.0], "backgroundColor": "#f9731633", "borderColor": "#f97316", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "PRÓTESE", "data": [5800.0, 18630.0, 11060.0, 4480.0], "backgroundColor": "#ec489933", "borderColor": "#ec4899", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "Periodontia", "data": [1852.67, 6013.0, 3390.0, 0.0], "backgroundColor": "#06b6d433", "borderColor": "#06b6d4", "fill": false, "tension": 0.4, "pointRadius": 3}], "top_esp": [{"name": "IMPLANTES", "val": 67533.96}, {"name": "PRÓTESE", "val": 39970.0}, {"name": "ORTODONTIA", "val": 39954.78}, {"name": "DENTÍSTICA", "val": 31302.28}, {"name": "ENDODONTIA", "val": 30797.64}, {"name": "PERIODONTIA", "val": 18134.4}, {"name": "Periodontia ", "val": 11255.67}, {"name": "CIRURGIA", "val": 9329.69}, {"name": "ODONTOPEDIATRIA", "val": 2665.09}], "max_esp_val": 67533.96, "n_specs": 9, "goal_labels": ["June", "July", "August", "Septemb"], "goal_targets": [0.0, 0.0, 0.0, 0.0], "goal_actual": [68515.84, 112573.72000000003, 77548.95000000003, 4480.0], "goal_pct": [0, 0, 0, 0], "miss_labels": ["June", "July", "August", "Septemb"], "miss_vals": [107, 93, 92, 5], "appt_month_labels": [], "appt_month_vals": [], "appt_prof": [{"name": "ADRIELI ARAUJO DE ALMEIDA", "cnt": 668}, {"name": "BARBARA CASARI LAURETTI", "cnt": 220}, {"name": "MAISA KEFFLER CANDIA", "cnt": 199}, {"name": "CAROLINE SILVA PREUS", "cnt": 175}, {"name": "FERNANDA PANGONI SOARES", "cnt": 130}, {"name": "LIVIA HELENA RIFON GARCIA", "cnt": 28}, {"name": "JOÃO PAULO SCHUSSLER", "cnt": 20}, {"name": "NELSON TALATOCI OSHIRO FILHO", "cnt": 16}], "appt_cat": [{"name": "Manutenção ", "cnt": 329}, {"name": "Avaliação", "cnt": 238}, {"name": "Restauração", "cnt": 173}, {"name": "Retorno", "cnt": 143}, {"name": "Profilaxia", "cnt": 142}, {"name": "CONSULTA", "cnt": 98}, {"name": "PARTICULAR", "cnt": 86}, {"name": "Endodontia", "cnt": 73}], "how_met": [{"name": "Não informado", "cnt": 1417}, {"name": "Plano/Convênio", "cnt": 27}, {"name": "Indicado por", "cnt": 6}, {"name": "Outros", "cnt": 5}, {"name": "Google", "cnt": 1}], "n_profs": 8, "funnel_w": 51.7}, "ytd": {"label": "YTD", "from": "2026-01-01", "to": "2026-09-01", "n_months": 9, "total_rev": 559014.02, "total_exp": 393918.37, "total_profit": 165095.65, "margin_pct": 29.5, "total_amount": 0.0, "total_appr": 0, "total_rej": 0, "total_est": 0, "conv_rate": 0, "avg_ticket": 0.0, "total_appts": 3466, "total_misses": 807, "noshow_rate": 18.9, "health_score": 21, "health_color": "#ef4444", "mom_rev_pct": -94.2, "mom_exp_pct": -100.0, "avg_goal_pct": 0.0, "breakeven": 35741.34, "avg_fixed_mo": 24861.76, "avg_monthly_rev": 62112.67, "avg_monthly_exp": 43768.71, "be_coverage": 100, "be_margin": 26371.33, "margin_score": 59, "conv_score": 0, "goal_score": 0, "noshow_score": 6, "fin_labels": ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"], "fin_rev": [35750.18, 50455.68, 90875.86, 53012.64, 65801.15, 68515.84, 112573.72, 77548.95, 4480.0], "fin_exp": [55384.09, 47984.11, 46650.83, 46103.8, 45055.71, 45152.83, 54892.94, 52694.06, 0.0], "fin_profit": [-19633.91, 2471.57, 44225.03, 6908.84, 20745.44, 23363.01, 57680.78, 24854.89, 4480.0], "fin_margin": [-54.9, 4.9, 48.7, 13.0, 31.5, 34.1, 51.2, 32.1, 100.0], "proj_labels": ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"], "all_rev_hist": [35750.18, 50455.68, 90875.86, 53012.64, 65801.15, 68515.84, 112573.72, 77548.95, 4480.0, null, null, null], "all_exp_hist": [55384.09, 47984.11, 46650.83, 46103.8, 45055.71, 45152.83, 54892.94, 52694.06, 0.0, null, null, null], "proj_rev_line": [null, null, null, null, null, null, null, null, null, 63370.84, 63622.47, 63874.1], "proj_exp_line": [null, null, null, null, null, null, null, null, null, 27779.27, 24581.38, 21383.49], "proj_months": ["2026-10", "2026-11", "2026-12"], "proj_rev": [63370.84, 63622.47, 63874.1], "proj_exp": [27779.27, 24581.38, 21383.49], "proj_profit": [35591.57, 39041.09, 42490.61], "cat_labels": ["Empréstimo", "COMISSÃO", "Fornecedores", "Funcionários", "Aluguel", "Cadastro de Fornecedores", "Materiais", "Impostos", "PRÓ LABORE", "Outros", "Software", "CRO"], "cat_vals": [88560.6, 73990.07, 59124.79, 52057.27, 50007.32, 29439.2, 18314.98, 13897.36, 2538.0, 2297.3, 2136.8, 1554.68], "esp_month_labels": ["January", "February", "March", "April", "May", "June", "July", "August", "September"], "esp_datasets": [{"label": "CIRURGIA", "data": [126.86, 177.37, 358.11, 1149.39, 145.29, 6960.74, 1890.42, 478.53, 0.0], "backgroundColor": "#6366f133", "borderColor": "#6366f1", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "DENTÍSTICA", "data": [3465.54, 2928.58, 3285.97, 4398.15, 4094.04, 9104.79, 14352.45, 7845.04, 0.0], "backgroundColor": "#10b98133", "borderColor": "#10b981", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ENDODONTIA", "data": [1595.84, 2516.86, 5214.92, 3532.58, 5133.5, 8108.43, 14955.28, 7733.93, 0.0], "backgroundColor": "#f59e0b33", "borderColor": "#f59e0b", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "IMPLANTES", "data": [0.0, 1085.23, 1041.06, 2082.12, 3123.18, 11117.88, 32326.11, 24089.97, 0.0], "backgroundColor": "#ef444433", "borderColor": "#ef4444", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ODONTOPEDIATRIA", "data": [0.0, 0.0, 0.0, 0.0, 56.18, 1551.09, 1114.0, 0.0, 0.0], "backgroundColor": "#8b5cf633", "borderColor": "#8b5cf6", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "ORTODONTIA", "data": [3385.18, 2730.62, 2902.38, 4951.14, 5663.78, 12036.32, 11126.86, 16791.6, 0.0], "backgroundColor": "#14b8a633", "borderColor": "#14b8a6", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "PERIODONTIA", "data": [4741.76, 3977.02, 3971.42, 3559.26, 3997.18, 3608.92, 8365.6, 6159.88, 0.0], "backgroundColor": "#f9731633", "borderColor": "#f97316", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "PRÓTESE", "data": [0.0, 0.0, 0.0, 0.0, 0.0, 5800.0, 18630.0, 11060.0, 4480.0], "backgroundColor": "#ec489933", "borderColor": "#ec4899", "fill": false, "tension": 0.4, "pointRadius": 3}, {"label": "Periodontia", "data": [3042.78, 1275.0, 1780.0, 4395.0, 3768.0, 1852.67, 6013.0, 3390.0, 0.0], "backgroundColor": "#06b6d433", "borderColor": "#06b6d4", "fill": false, "tension": 0.4, "pointRadius": 3}], "top_esp": [{"name": "IMPLANTES", "val": 74865.55}, {"name": "ORTODONTIA", "val": 59587.88}, {"name": "DENTÍSTICA", "val": 49474.56}, {"name": "ENDODONTIA", "val": 48791.34}, {"name": "PRÓTESE", "val": 39970.0}, {"name": "PERIODONTIA", "val": 38381.04}, {"name": "Periodontia ", "val": 25516.45}, {"name": "CIRURGIA", "val": 11286.71}, {"name": "ODONTOPEDIATRIA", "val": 2721.27}], "max_esp_val": 74865.55, "n_specs": 9, "goal_labels": ["January", "Februar", "March", "April", "May", "June", "July", "August", "Septemb"], "goal_targets": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "goal_actual": [35750.18, 50455.67999999999, 90875.86000000002, 53012.64, 65801.15000000001, 68515.84, 112573.72000000003, 77548.95000000003, 4480.0], "goal_pct": [0, 0, 0, 0, 0, 0, 0, 0, 0], "miss_labels": ["January", "Februar", "March", "April", "May", "June", "July", "August", "Septemb"], "miss_vals": [91, 99, 110, 107, 103, 107, 93, 92, 5], "appt_month_labels": [], "appt_month_vals": [], "appt_prof": [{"name": "ADRIELI ARAUJO DE ALMEIDA", "cnt": 1462}, {"name": "FERNANDA PANGONI SOARES", "cnt": 535}, {"name": "MAISA KEFFLER CANDIA", "cnt": 475}, {"name": "CAROLINE SILVA PREUS", "cnt": 444}, {"name": "BARBARA CASARI LAURETTI", "cnt": 299}, {"name": "LIVIA HELENA RIFON GARCIA", "cnt": 166}, {"name": "NELSON TALATOCI OSHIRO FILHO", "cnt": 47}, {"name": "JOÃO PAULO SCHUSSLER", "cnt": 36}, {"name": "ELOISA COSTA AMARAL", "cnt": 2}], "appt_cat": [{"name": "Manutenção ", "cnt": 740}, {"name": "Avaliação", "cnt": 645}, {"name": "Restauração", "cnt": 469}, {"name": "Retorno", "cnt": 336}, {"name": "Profilaxia", "cnt": 259}, {"name": "CONSULTA", "cnt": 210}, {"name": "Protese", "cnt": 201}, {"name": "Endodontia", "cnt": 189}], "how_met": [{"name": "Não informado", "cnt": 3272}, {"name": "Plano/Convênio", "cnt": 168}, {"name": "Indicado por", "cnt": 13}, {"name": "Outros", "cnt": 10}, {"name": "Placa", "cnt": 2}, {"name": "Google", "cnt": 1}], "n_profs": 9, "funnel_w": 50}};
+const COLORS  = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6", "#f97316", "#ec4899", "#06b6d4", "#84cc16", "#3b82f6", "#a855f7"];
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function sw(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+}
+
+// ── Formatters ────────────────────────────────────────────────────────────────
+function fmt(v){
+  if(v==null||isNaN(v)) return 'R$ 0,00';
+  return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtk(v){
+  if(v==null||isNaN(v)) return 'R$ 0';
+  v=Number(v);
+  if(v>=1e6) return 'R$ '+(v/1e6).toFixed(1)+'M';
+  if(v>=1e3) return 'R$ '+(v/1e3).toFixed(1)+'K';
+  return 'R$ '+Math.round(v);
+}
+function arr(p){return p>2?'↑':p<-2?'↓':'→';}
+function badgeCls(p){return p>=0?'up':'dn';}
+
+// ── Text ──────────────────────────────────────────────────────────────────────
+function txt(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
+function html(id,val){const e=document.getElementById(id);if(e)e.innerHTML=val;}
+function style(id,prop,val){const e=document.getElementById(id);if(e)e.style[prop]=val;}
+
+// ── Chart instances ───────────────────────────────────────────────────────────
+let trendChart,finChart,marginChart,catChart,espChart,apptChart,catApptChart,
+    convChart,goalChart,howMetChart,apptMonthChart,missChart,howMetChart2;
+
+const C='#94a3b8',G1='#1e293b',G2='#334155';
+const scaleR={ticks:{color:'#64748b',font:{size:10},callback:v=>'R$'+v.toLocaleString('pt-BR')},grid:{color:G2}};
+const scaleN={ticks:{color:'#64748b',font:{size:10}},grid:{color:G2}};
+const scaleP={ticks:{color:'#64748b',font:{size:10},callback:v=>v+'%'},grid:{color:G2}};
+const scaleX={ticks:{color:'#64748b',font:{size:10}},grid:{color:G1}};
+const leg={labels:{color:C,boxWidth:11,font:{size:10}}};
+const legR={position:'right',labels:{color:C,boxWidth:10,font:{size:10}}};
+
+function initCharts(){
+  const d=PERIODS.mat;
+  trendChart=new Chart(document.getElementById('trendChart'),{type:'line',
+    data:{labels:d.proj_labels,datasets:[
+      {label:'Receita',data:d.all_rev_hist,borderColor:'#10b981',backgroundColor:'#10b98122',fill:true,tension:.4,pointRadius:3,spanGaps:false},
+      {label:'Despesa',data:d.all_exp_hist,borderColor:'#ef4444',backgroundColor:'#ef444422',fill:false,tension:.4,pointRadius:3,spanGaps:false},
+      {label:'Proj. Receita',data:d.proj_rev_line,borderColor:'#10b981',borderDash:[7,3],backgroundColor:'transparent',tension:.4,pointRadius:5,pointStyle:'triangle',spanGaps:false},
+      {label:'Proj. Despesa',data:d.proj_exp_line,borderColor:'#ef4444',borderDash:[7,3],backgroundColor:'transparent',tension:.4,pointRadius:5,pointStyle:'triangle',spanGaps:false},
+    ]},options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},plugins:{legend:leg},scales:{x:scaleX,y:scaleR}}
+  });
+  finChart=new Chart(document.getElementById('finChart'),{type:'bar',
+    data:{labels:d.fin_labels,datasets:[
+      {label:'Receita',data:d.fin_rev,backgroundColor:'#10b98133',borderColor:'#10b981',borderWidth:2,borderRadius:3},
+      {label:'Despesa',data:d.fin_exp,backgroundColor:'#ef444433',borderColor:'#ef4444',borderWidth:2,borderRadius:3},
+      {label:'Resultado',data:d.fin_profit,type:'line',borderColor:'#6366f1',backgroundColor:'#6366f122',fill:true,tension:.4,yAxisID:'y'},
+    ]},options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},plugins:{legend:leg},scales:{x:scaleX,y:scaleR}}
+  });
+  marginChart=new Chart(document.getElementById('marginChart'),{type:'line',
+    data:{labels:d.fin_labels,datasets:[
+      {label:'Margem %',data:d.fin_margin,borderColor:'#f59e0b',backgroundColor:'#f59e0b22',fill:true,tension:.4,pointRadius:4},
+    ]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:leg},scales:{x:scaleX,y:scaleP}}
+  });
+  catChart=new Chart(document.getElementById('catChart'),{type:'bar',
+    data:{labels:d.cat_labels,datasets:[{label:'R$',data:d.cat_vals,
+      backgroundColor:COLORS.slice(0,d.cat_labels.length).map(c=>c+'99'),
+      borderColor:COLORS.slice(0,d.cat_labels.length),borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#64748b',callback:v=>'R$'+v.toLocaleString('pt-BR')},grid:{color:G2}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:G1}}}
+    }
+  });
+  espChart=new Chart(document.getElementById('espChart'),{type:'line',
+    data:{labels:d.esp_month_labels,datasets:d.esp_datasets},
+    options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},plugins:{legend:leg},scales:{x:scaleX,y:scaleR}}
+  });
+  apptChart=new Chart(document.getElementById('apptChart'),{type:'bar',
+    data:{labels:d.appt_prof.map(x=>x.name),datasets:[{label:'Agendamentos',data:d.appt_prof.map(x=>x.cnt),backgroundColor:'#8b5cf655',borderColor:'#8b5cf6',borderWidth:2,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:scaleN,y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:G1}}}}
+  });
+  catApptChart=new Chart(document.getElementById('catApptChart'),{type:'doughnut',
+    data:{labels:d.appt_cat.map(x=>x.name),datasets:[{data:d.appt_cat.map(x=>x.cnt),
+      backgroundColor:COLORS.slice(0,d.appt_cat.length).map(c=>c+'99'),borderWidth:1,hoverOffset:6}]},
+    options:{responsive:true,plugins:{legend:legR}}
+  });
+  convChart=new Chart(document.getElementById('convChart'),{type:'doughnut',
+    data:{labels:['Aprovados','Não Aprovados'],datasets:[{data:[d.total_appr,d.total_rej],
+      backgroundColor:['#10b98199','#ef444455'],borderColor:['#10b981','#ef4444'],borderWidth:2,hoverOffset:8}]},
+    options:{responsive:true,plugins:{legend:{position:'right',labels:{color:C,boxWidth:11,font:{size:11}}}}}
+  });
+  goalChart=new Chart(document.getElementById('goalChart'),{type:'bar',
+    data:{labels:d.goal_labels,datasets:[
+      {label:'Meta',data:d.goal_targets,backgroundColor:'#3b82f622',borderColor:'#3b82f6',borderWidth:2,borderRadius:3},
+      {label:'Realizado',data:d.goal_actual,backgroundColor:'#10b98155',borderColor:'#10b981',borderWidth:2,borderRadius:3},
+    ]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:leg},scales:{x:scaleX,y:scaleR}}
+  });
+  howMetChart=new Chart(document.getElementById('howMetChart'),{type:'bar',
+    data:{labels:d.how_met.map(x=>x.name),datasets:[{label:'Pacientes',data:d.how_met.map(x=>x.cnt),
+      backgroundColor:COLORS.slice(0,d.how_met.length).map(c=>c+'55'),
+      borderColor:COLORS.slice(0,d.how_met.length),borderWidth:2,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:scaleN,y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:G1}}}}
+  });
+  apptMonthChart=new Chart(document.getElementById('apptMonthChart'),{type:'bar',
+    data:{labels:d.appt_month_labels,datasets:[{label:'Agendamentos',data:d.appt_month_vals,backgroundColor:'#06b6d455',borderColor:'#06b6d4',borderWidth:2,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:scaleX,y:scaleN}}
+  });
+  missChart=new Chart(document.getElementById('missChart'),{type:'bar',
+    data:{labels:d.miss_labels,datasets:[{label:'Faltas',data:d.miss_vals,backgroundColor:'#f59e0b55',borderColor:'#f59e0b',borderWidth:2,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:scaleX,y:scaleN}}
+  });
+  howMetChart2=new Chart(document.getElementById('howMetChart2'),{type:'doughnut',
+    data:{labels:d.how_met.map(x=>x.name),datasets:[{data:d.how_met.map(x=>x.cnt),
+      backgroundColor:COLORS.slice(0,d.how_met.length).map(c=>c+'99'),borderWidth:1,hoverOffset:6}]},
+    options:{responsive:true,plugins:{legend:legR}}
+  });
+}
+
+// ── Table builders ────────────────────────────────────────────────────────────
+function buildExpRows(d){
+  const totalExp=d.total_exp;
+  const maxVal=d.cat_vals[0]||1;
+  return d.cat_labels.map((lb,i)=>{
+    const v=d.cat_vals[i], pct=totalExp>0?((v/totalExp)*100).toFixed(1):0;
+    const bw=Math.round(v/maxVal*100);
+    const c=COLORS[i%COLORS.length];
+    return `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:6px"></span>${lb}</td>
+      <td class="num">${fmt(v)}</td><td class="num">${pct}%</td>
+      <td class="bar-cell"><div class="mini-bar"><div class="mini-bar-fill" style="width:${bw}%;background:${c}"></div></div></td></tr>`;
+  }).join('');
+}
+
+function buildEspRows(d){
+  const maxVal=d.max_esp_val||1;
+  return d.top_esp.map((e,i)=>{
+    const bw=Math.round(e.val/maxVal*100);
+    const c=COLORS[i%COLORS.length];
+    return `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:6px"></span>${e.name}</td>
+      <td class="num">${fmt(e.val)}</td>
+      <td class="bar-cell"><div class="mini-bar"><div class="mini-bar-fill" style="width:${bw}%;background:${c}"></div></div></td></tr>`;
+  }).join('');
+}
+
+function buildGoalRows(d){
+  return d.goal_labels.map((lb,i)=>{
+    const pct=d.goal_pct[i];
+    const [cls,lbl]=pct>=100?['good','✓ Atingida']:pct>=75?['warn','~ Parcial']:['bad','✗ Abaixo'];
+    return `<tr><td>${lb}</td><td class="num">${fmtk(d.goal_targets[i])}</td>
+      <td class="num">${fmtk(d.goal_actual[i])}</td><td class="num">${pct}%</td>
+      <td><span class="tag ${cls}">${lbl}</span></td></tr>`;
+  }).join('');
+}
+
+function buildApptRows(d){
+  const maxCnt=d.appt_prof[0]?d.appt_prof[0].cnt:1;
+  return d.appt_prof.map((p,i)=>{
+    const bw=Math.round(p.cnt/maxCnt*100);
+    const c=COLORS[i%COLORS.length];
+    return `<tr><td>${p.name}</td><td class="num">${p.cnt}</td>
+      <td class="bar-cell"><div class="mini-bar"><div class="mini-bar-fill" style="width:${bw}%;background:${c}"></div></div></td></tr>`;
+  }).join('');
+}
+
+function buildBeContent(d){
+  const beCol=d.avg_monthly_rev>d.breakeven?'var(--green)':'var(--amber)';
+  const beSign=d.be_margin>=0?'+':'';
+  return `
+    <div class="info-row" style="border-color:var(--amber)">
+      <span style="font-size:.73rem;color:var(--text3)">Break-even mensal</span>
+      <span style="font-weight:700;color:var(--amber);font-size:1.05rem">${fmtk(d.breakeven)}</span>
+    </div>
+    <div class="info-row" style="border-color:#ef4444">
+      <span style="font-size:.73rem;color:var(--text3)">Custos fixos / mês</span>
+      <span style="font-weight:600;color:var(--red)">${fmtk(d.avg_fixed_mo)}</span>
+    </div>
+    <div class="info-row" style="border-color:var(--blue)">
+      <span style="font-size:.73rem;color:var(--text3)">Receita média / mês</span>
+      <span style="font-weight:600;color:var(--blue)">${fmtk(d.avg_monthly_rev)}</span>
+    </div>
+    <div class="info-row" style="border-color:${beCol}">
+      <span style="font-size:.73rem;color:var(--text3)">Margem acima do BE</span>
+      <span style="font-weight:700;color:${beCol}">${beSign}${fmtk(d.be_margin)}</span>
+    </div>
+    <div style="margin-top:6px;font-size:.7rem">
+      <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:4px">
+        <span>Cobertura do break-even</span><span style="color:var(--text)">${d.be_coverage}%</span>
+      </div>
+      <div class="prog" style="height:10px"><div class="prog-fill" style="width:${d.be_coverage}%;background:${beCol}"></div></div>
+    </div>`;
+}
+
+function buildProjContent(d){
+  return d.proj_months.slice(0,3).map((m,i)=>{
+    const col=d.proj_profit[i]>=0?'var(--green)':'var(--red)';
+    return `<div style="background:#1e293b;border-radius:10px;padding:14px 16px;border-left:3px solid ${col}">
+      <div style="font-size:.72rem;color:var(--text3);margin-bottom:8px;font-weight:600">${m}</div>
+      <div style="display:flex;justify-content:space-between;gap:8px">
+        <div style="text-align:center">
+          <div style="font-size:.6rem;color:var(--text3)">Receita</div>
+          <div style="font-weight:700;color:var(--green);font-size:.9rem">${fmtk(d.proj_rev[i])}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:.6rem;color:var(--text3)">Despesa</div>
+          <div style="font-weight:700;color:var(--red);font-size:.9rem">${fmtk(d.proj_exp[i])}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:.6rem;color:var(--text3)">Resultado</div>
+          <div style="font-weight:700;font-size:.9rem;color:${col}">${fmtk(d.proj_profit[i])}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildFunnelContent(d){
+  const fw=Math.min(100,d.funnel_w);
+  return `
+    <div>
+      <div style="font-size:.67rem;color:var(--text3);margin-bottom:5px">ORÇAMENTOS GERADOS</div>
+      <div style="background:#3b82f633;border:1px solid #3b82f666;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="color:#60a5fa;font-weight:700">${d.total_est.toLocaleString('pt-BR')}</span>
+        <span style="color:var(--text3);font-size:.7rem">100%</span>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.7rem;color:var(--text3)">▼ taxa de conversão: ${d.conv_rate}%</div>
+    <div>
+      <div style="font-size:.67rem;color:var(--text3);margin-bottom:5px">APROVADOS</div>
+      <div style="background:#10b98133;border:1px solid #10b98166;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;width:${fw}%;min-width:120px">
+        <span style="color:#34d399;font-weight:700">${d.total_appr.toLocaleString('pt-BR')}</span>
+        <span style="color:var(--text3);font-size:.7rem">${d.conv_rate}%</span>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.7rem;color:var(--text3)">× ticket médio: ${fmt(d.avg_ticket)}</div>
+    <div>
+      <div style="font-size:.67rem;color:var(--text3);margin-bottom:5px">RECEITA GERADA</div>
+      <div style="background:#8b5cf633;border:1px solid #8b5cf666;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;width:${fw}%;min-width:150px">
+        <span style="color:#a78bfa;font-weight:700">${fmt(d.total_amount)}</span>
+      </div>
+    </div>`;
+}
+
+// ── Chart updater ─────────────────────────────────────────────────────────────
+function updateCharts(d){
+  // Trend
+  trendChart.data.labels=d.proj_labels;
+  trendChart.data.datasets[0].data=d.all_rev_hist;
+  trendChart.data.datasets[1].data=d.all_exp_hist;
+  trendChart.data.datasets[2].data=d.proj_rev_line;
+  trendChart.data.datasets[3].data=d.proj_exp_line;
+  trendChart.update();
+  // Financial P&L
+  finChart.data.labels=d.fin_labels;
+  finChart.data.datasets[0].data=d.fin_rev;
+  finChart.data.datasets[1].data=d.fin_exp;
+  finChart.data.datasets[2].data=d.fin_profit;
+  finChart.update();
+  // Margin
+  marginChart.data.labels=d.fin_labels;
+  marginChart.data.datasets[0].data=d.fin_margin;
+  marginChart.update();
+  // Categories
+  catChart.data.labels=d.cat_labels;
+  catChart.data.datasets[0].data=d.cat_vals;
+  catChart.data.datasets[0].backgroundColor=COLORS.slice(0,d.cat_labels.length).map(c=>c+'99');
+  catChart.data.datasets[0].borderColor=COLORS.slice(0,d.cat_labels.length);
+  catChart.update();
+  // Specialty
+  espChart.data.labels=d.esp_month_labels;
+  espChart.data.datasets=d.esp_datasets;
+  espChart.update();
+  // Appt by prof
+  apptChart.data.labels=d.appt_prof.map(x=>x.name);
+  apptChart.data.datasets[0].data=d.appt_prof.map(x=>x.cnt);
+  apptChart.update();
+  // Appt by cat doughnut
+  catApptChart.data.labels=d.appt_cat.map(x=>x.name);
+  catApptChart.data.datasets[0].data=d.appt_cat.map(x=>x.cnt);
+  catApptChart.data.datasets[0].backgroundColor=COLORS.slice(0,d.appt_cat.length).map(c=>c+'99');
+  catApptChart.update();
+  // Conversion doughnut
+  convChart.data.datasets[0].data=[d.total_appr,d.total_rej];
+  convChart.update();
+  // Goals
+  goalChart.data.labels=d.goal_labels;
+  goalChart.data.datasets[0].data=d.goal_targets;
+  goalChart.data.datasets[1].data=d.goal_actual;
+  goalChart.update();
+  // How met bar
+  howMetChart.data.labels=d.how_met.map(x=>x.name);
+  howMetChart.data.datasets[0].data=d.how_met.map(x=>x.cnt);
+  howMetChart.data.datasets[0].backgroundColor=COLORS.slice(0,d.how_met.length).map(c=>c+'55');
+  howMetChart.data.datasets[0].borderColor=COLORS.slice(0,d.how_met.length);
+  howMetChart.update();
+  // Appt by month
+  apptMonthChart.data.labels=d.appt_month_labels;
+  apptMonthChart.data.datasets[0].data=d.appt_month_vals;
+  apptMonthChart.update();
+  // Miss
+  missChart.data.labels=d.miss_labels;
+  missChart.data.datasets[0].data=d.miss_vals;
+  missChart.update();
+  // How met doughnut
+  howMetChart2.data.labels=d.how_met.map(x=>x.name);
+  howMetChart2.data.datasets[0].data=d.how_met.map(x=>x.cnt);
+  howMetChart2.data.datasets[0].backgroundColor=COLORS.slice(0,d.how_met.length).map(c=>c+'99');
+  howMetChart2.update();
+}
+
+// ── Main renderer ─────────────────────────────────────────────────────────────
+function renderPeriod(p){
+  const d=PERIODS[p];
+  if(!d) return;
+
+  // Period badge
+  txt('period-badge','📅 '+d.from+' → '+d.to+' ['+p.toUpperCase()+']');
+
+  // ── Executivo KPIs ──
+  txt('kpi-rev',fmt(d.total_rev));
+  html('kpi-rev-sub',`<span class="badge ${badgeCls(d.mom_rev_pct)}">${arr(d.mom_rev_pct)} ${Math.abs(d.mom_rev_pct)}% MoM</span>`);
+  txt('kpi-exp',fmt(d.total_exp));
+  html('kpi-exp-sub',`<span class="badge ${d.mom_exp_pct>0?'dn':'up'}">${arr(d.mom_exp_pct)} ${Math.abs(d.mom_exp_pct)}% MoM</span>`);
+  txt('kpi-profit',fmt(d.total_profit));
+  txt('kpi-profit-sub','Margem '+d.margin_pct+'%');
+  const profCard=document.getElementById('kpi-profit-card');
+  if(profCard){ profCard.className='kpi '+(d.total_profit>=0?'green':'red'); }
+  txt('kpi-prod',fmt(d.total_amount));
+  txt('kpi-prod-sub',d.total_appr+' orçamentos');
+  txt('kpi-conv',d.conv_rate+'%');
+  txt('kpi-conv-sub','de '+d.total_est.toLocaleString('pt-BR')+' orçamentos');
+  txt('kpi-ticket',fmt(d.avg_ticket));
+  txt('kpi-appts',d.total_appts.toLocaleString('pt-BR'));
+  txt('kpi-noshow',d.noshow_rate+'%');
+  txt('kpi-noshow-sub',d.total_misses+' faltas no período');
+  const nsCard=document.getElementById('kpi-noshow-card');
+  if(nsCard) nsCard.className='kpi '+(d.noshow_rate<20?'amber':'red');
+
+  // ── Health Score ──
+  style('health-num','color',d.health_color);
+  txt('health-num',d.health_score);
+  style('health-label-txt','color',d.health_color);
+  txt('health-label-txt',d.health_score>=75?'EXCELENTE':d.health_score>=50?'BOM':'ATENÇÃO');
+  txt('score-margin-txt',d.margin_score+'pts');
+  style('score-margin-bar','width',d.margin_score+'%');
+  txt('score-conv-txt',d.conv_score+'pts');
+  style('score-conv-bar','width',d.conv_score+'%');
+  txt('score-goal-txt',d.goal_score+'pts');
+  style('score-goal-bar','width',d.goal_score+'%');
+  txt('score-noshow-txt',d.noshow_score+'pts');
+  style('score-noshow-bar','width',d.noshow_score+'%');
+
+  // Break-even + Projections
+  html('be-content',buildBeContent(d));
+  html('proj-content',buildProjContent(d));
+
+  // ── Financeiro KPIs ──
+  txt('f-rev',fmt(d.total_rev));
+  txt('f-rev-sub',d.n_months+' meses');
+  txt('f-exp',fmt(d.total_exp));
+  txt('f-profit',fmt(d.total_profit));
+  txt('f-margin-sub','Margem '+d.margin_pct+'%');
+  const fpCard=document.getElementById('f-profit-card');
+  if(fpCard) fpCard.className='kpi '+(d.total_profit>=0?'green':'red');
+  txt('f-avg-rev',fmtk(d.avg_monthly_rev));
+  txt('f-avg-exp',fmtk(d.avg_monthly_exp));
+  txt('f-be',fmtk(d.breakeven));
+
+  // ── Clínico KPIs ──
+  txt('c-prod',fmt(d.total_amount));
+  txt('c-prod-sub',d.total_appr+' orçamentos');
+  txt('c-ticket',fmt(d.avg_ticket));
+  txt('c-specs',d.n_specs);
+  txt('c-appts',d.total_appts.toLocaleString('pt-BR'));
+
+  // ── Comercial KPIs ──
+  txt('cm-est',d.total_est.toLocaleString('pt-BR'));
+  txt('cm-appr',d.total_appr.toLocaleString('pt-BR'));
+  txt('cm-rej',d.total_rej.toLocaleString('pt-BR'));
+  txt('cm-conv',d.conv_rate+'%');
+  txt('cm-ticket',fmt(d.avg_ticket));
+  txt('cm-amount',fmt(d.total_amount));
+  html('funnel-content',buildFunnelContent(d));
+
+  // ── Operacional KPIs ──
+  txt('op-appts',d.total_appts.toLocaleString('pt-BR'));
+  txt('op-miss',d.total_misses.toLocaleString('pt-BR'));
+  txt('op-noshow',d.noshow_rate+'%');
+  const opCard=document.getElementById('op-noshow-card');
+  if(opCard) opCard.className='kpi '+(d.noshow_rate<20?'amber':'red');
+  txt('op-profs',d.n_profs);
+
+  // ── Tables ──
+  html('exp-rows',buildExpRows(d));
+  html('esp-rows',buildEspRows(d));
+  html('goal-rows',buildGoalRows(d));
+  html('appt-rows',buildApptRows(d));
+
+  // ── Charts ──
+  updateCharts(d);
+}
+
+// ── Period switch ─────────────────────────────────────────────────────────────
+function switchPeriod(p){
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  renderPeriod(p);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+initCharts();
+renderPeriod('mat');
 </script>
 </body>
 </html>
