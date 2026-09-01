@@ -3,7 +3,7 @@ Dashboard Klinik Odontologia — v2.1 Multi-Period
 Filtros: MAT (12m) | MQT (3m) | YTD
 """
 
-import base64, requests, json, os
+import base64, requests, json, os, re
 from datetime import datetime, timedelta, date
 from collections import defaultdict
 
@@ -16,8 +16,12 @@ BASE        = "https://api.clinicorp.com/rest/v1"
 creds   = base64.b64encode(f"{USER}:{TOKEN}".encode()).decode()
 HEADERS = {"Authorization": f"Basic {creds}"}
 
-TODAY  = date.today()
-TO_STR = TODAY.strftime("%Y-%m-%d")
+TODAY   = date.today()
+# Use last day of the PREVIOUS complete month as the "to" boundary.
+# This excludes the current partial month from all period calculations,
+# preventing: wrong averages, fake -94% MoM, MAT=13months, MQT=4months.
+TO_DATE = TODAY.replace(day=1) - timedelta(days=1)   # e.g. 2026-08-31
+TO_STR  = TO_DATE.strftime("%Y-%m-%d")
 
 FIXED_CATS = {"Aluguel","Funcionários","Software","CRO","Seguro","Contabilidade",
               "Internet","Telefone","Empréstimo","Cadastro de Fornecedores"}
@@ -58,11 +62,11 @@ if isinstance(professionals, list):
 
 # ─── API CALL ─────────────────────────────────────────────────────────────────
 
-def api(path, from_str, to_str, extra=None):
+def api(path, from_str, to_str, extra=None, timeout=45):
     params = {"subscriber_id": SUBSCRIBER, "from": from_str, "to": to_str}
     if extra: params.update(extra)
     try:
-        r = requests.get(BASE + path, headers=HEADERS, params=params, timeout=20)
+        r = requests.get(BASE + path, headers=HEADERS, params=params, timeout=timeout)
         if r.status_code == 200: return r.json()
         print(f"  ⚠ {path} [{from_str[:7]}→{to_str[:7]}] → {r.status_code}")
         return None
@@ -168,30 +172,64 @@ def compute_period(label, from_str, to_str):
 
     # ── Specialty ──────────────────────────────────────────────────────────────
     esp_months_raw = expertise_raw if isinstance(expertise_raw, list) else []
-    esp_keys = sorted({k for row in esp_months_raw
-                       for k in row.keys()
-                       if k.lower() not in ("month","from","to","year","date","")})
+    # Collect raw keys first, then normalise: strip + title-case to merge
+    # duplicates like "PERIODONTIA" and "Periodontia " (trailing space).
+    raw_keys = [k for row in esp_months_raw
+                for k in row.keys()
+                if k.strip().lower() not in ("month","from","to","year","date","")]
+    # Build mapping: normalised_key → canonical display name (first seen)
+    norm_map = {}  # raw → normalised
+    for k in raw_keys:
+        nk = k.strip().title()
+        if nk not in {v for v in norm_map.values()}:
+            norm_map[k] = nk
+        else:
+            # map duplicate raw key to existing normalised key
+            norm_map[k] = nk
+    esp_keys_norm = sorted(set(norm_map.values()))
+
     esp_totals = defaultdict(float)
     for row in esp_months_raw:
-        for k in esp_keys:
-            esp_totals[k] += float(row.get(k, 0) or 0)
+        for raw_k, norm_k in norm_map.items():
+            esp_totals[norm_k] += float(row.get(raw_k, 0) or 0)
     top_esp     = sorted(esp_totals.items(), key=lambda x: -x[1])[:10]
     max_esp_val = max((v for _,v in top_esp), default=1)
 
+    # Build per-month data per normalised key
+    esp_month_data = {nk: [0.0]*len(esp_months_raw) for nk in esp_keys_norm}
+    for mi, row in enumerate(esp_months_raw):
+        for raw_k, norm_k in norm_map.items():
+            esp_month_data[norm_k][mi] += float(row.get(raw_k, 0) or 0)
+
     esp_datasets = []
-    for i, k in enumerate(esp_keys):
+    for i, nk in enumerate(esp_keys_norm):
         c = COLORS[i % len(COLORS)]
         esp_datasets.append({
-            "label": k.strip(),
-            "data":  [float(row.get(k,0) or 0) for row in esp_months_raw],
+            "label": nk,
+            "data":  [round(v, 2) for v in esp_month_data[nk]],
             "backgroundColor": c+"33", "borderColor": c,
             "fill": False, "tension": .4, "pointRadius": 3
         })
     esp_month_labels = [row.get("month","") or row.get("from","") for row in esp_months_raw]
 
     # ── Goals ──────────────────────────────────────────────────────────────────
+    _EN_TO_PT = {
+        "january":"Jan","february":"Fev","march":"Mar","april":"Abr",
+        "may":"Mai","june":"Jun","july":"Jul","august":"Ago",
+        "september":"Set","october":"Out","november":"Nov","december":"Dez",
+    }
+    def _month_label(raw):
+        """Convert API month string to PT-BR label, e.g. 'September 2026' -> 'Set/26'."""
+        s = (raw or "").strip()
+        for en, pt in _EN_TO_PT.items():
+            if s.lower().startswith(en):
+                yr = re.search(r"\d{4}", s)
+                return f"{pt}/{yr.group()[2:]}" if yr else pt
+        # fallback: assume YYYY-MM format
+        return s[:7]
+
     goals_list   = goals_raw if isinstance(goals_raw, list) else []
-    goal_labels  = [g.get("month", g.get("from",""))[:7] for g in goals_list]
+    goal_labels  = [_month_label(g.get("month", g.get("from",""))) for g in goals_list]
     goal_targets = [float(g.get("Goal", 0) or 0) for g in goals_list]
     goal_actual  = [float(g.get("TotalRevenueAmount", g.get("TotalRevenue",0)) or 0) for g in goals_list]
     goal_pct     = [round(goal_actual[i]/goal_targets[i]*100,1) if goal_targets[i]>0 else 0
@@ -212,11 +250,11 @@ def compute_period(label, from_str, to_str):
     appt_by_month = defaultdict(int)
     for a in appt_list:
         pid  = str(a.get("Dentist_PersonId",""))
-        name = prof_map.get(pid, f"Dr(a). {pid[:6]}" if pid else "Não informado")
+        name = prof_map.get(pid, f"Dr(a). {pid[:6]}" if pid else "Nao informado")
         appt_by_prof[name] += 1
         cat = a.get("CategoryDescription","Sem categoria") or "Sem categoria"
         appt_by_cat[cat] += 1
-        src = a.get("HowDidMeet","") or "Não informado"
+        src = a.get("HowDidMeet","") or "Nao informado"
         how_met_d[src] += 1
         dt = a.get("Date", a.get("AppointmentDate",""))
         if dt and len(dt) >= 7: appt_by_month[dt[:7]] += 1
@@ -232,8 +270,15 @@ def compute_period(label, from_str, to_str):
     total_exp    = sum(month_exp.values())
     total_profit = total_rev - total_exp
     margin_pct   = round(total_profit / total_rev * 100, 1) if total_rev > 0 else 0
-    noshow_rate  = round(total_misses / (total_appts + total_misses) * 100, 1) \
-                   if (total_appts + total_misses) > 0 else 0
+    # noshow_rate: only compute when we have real appointment data.
+    # If appts=0 but misses>0 it means the /appointment/list API returned nothing
+    # (timeout for long periods) -- report None rather than a fake 100%.
+    if total_appts > 0:
+        noshow_rate = round(total_misses / (total_appts + total_misses) * 100, 1)
+    elif total_misses > 0 and total_appts == 0:
+        noshow_rate = None   # API didn't return appointment data -- show N/D
+    else:
+        noshow_rate = 0
 
     mom_rev_pct = mom_exp_pct = 0
     if len(fin_months) >= 2:
@@ -243,16 +288,33 @@ def compute_period(label, from_str, to_str):
         if prev["expense"] > 0:
             mom_exp_pct = round((last["expense"]-prev["expense"])/prev["expense"]*100, 1)
 
-    health_score = round(
-        min(100, margin_pct*2)      * 0.35 +
-        min(100, conv_rate*1.5)     * 0.25 +
-        min(100, avg_goal_pct)      * 0.25 +
-        max(0, 100-noshow_rate*5)   * 0.15
-    )
+    # When noshow_rate is None (API returned no appointment data),
+    # exclude that component from the health score rather than penalising with 0.
+    _noshow_safe = noshow_rate if noshow_rate is not None else 0
+    _noshow_score = max(0, 100 - _noshow_safe * 5)
+    if noshow_rate is None:
+        # Re-weight remaining components to fill the 15% gap
+        health_score = round(
+            min(100, margin_pct*2)   * 0.41 +
+            min(100, conv_rate*1.5)  * 0.29 +
+            min(100, avg_goal_pct)   * 0.30
+        )
+    else:
+        health_score = round(
+            min(100, margin_pct*2)      * 0.35 +
+            min(100, conv_rate*1.5)     * 0.25 +
+            min(100, avg_goal_pct)      * 0.25 +
+            _noshow_score               * 0.15
+        )
     health_color = "#10b981" if health_score>=75 else "#f59e0b" if health_score>=50 else "#ef4444"
 
+    # Compute the correct number of complete months in the period (not len of data rows)
+    from_d = date.fromisoformat(from_str)
+    to_d   = date.fromisoformat(to_str)
+    n_months_real = (to_d.year - from_d.year) * 12 + (to_d.month - from_d.month) + 1
+
     return {
-        "label": label, "from": from_str, "to": to_str, "n_months": n,
+        "label": label, "from": from_str, "to": to_str, "n_months": n_months_real,
         # KPIs
         "total_rev": round(total_rev,2), "total_exp": round(total_exp,2),
         "total_profit": round(total_profit,2), "margin_pct": margin_pct,
@@ -260,7 +322,8 @@ def compute_period(label, from_str, to_str):
         "total_rej": total_rej, "total_est": total_est,
         "conv_rate": conv_rate, "avg_ticket": round(avg_ticket,2),
         "total_appts": total_appts, "total_misses": total_misses,
-        "noshow_rate": noshow_rate, "health_score": health_score,
+        "noshow_rate": noshow_rate,   # None = API sem dados (periodo longo)
+        "health_score": health_score,
         "health_color": health_color, "mom_rev_pct": mom_rev_pct,
         "mom_exp_pct": mom_exp_pct, "avg_goal_pct": round(avg_goal_pct,1),
         # Break-even
@@ -271,7 +334,7 @@ def compute_period(label, from_str, to_str):
         "margin_score": round(min(100,margin_pct*2)),
         "conv_score":   round(min(100,conv_rate*1.5)),
         "goal_score":   round(min(100,avg_goal_pct)),
-        "noshow_score": round(max(0,100-noshow_rate*5)),
+        "noshow_score": round(max(0, 100 - (noshow_rate or 0) * 5)),
         # Financial charts
         "fin_labels": [m["label"] for m in fin_months],
         "fin_rev":    [m["revenue"] for m in fin_months],
@@ -288,7 +351,7 @@ def compute_period(label, from_str, to_str):
         # Specialty
         "esp_month_labels": esp_month_labels, "esp_datasets": esp_datasets,
         "top_esp": [{"name": nm, "val": round(vl,2)} for nm,vl in top_esp],
-        "max_esp_val": round(max_esp_val,2), "n_specs": len(esp_keys),
+        "max_esp_val": round(max_esp_val,2), "n_specs": len(esp_keys_norm),
         # Goals
         "goal_labels": goal_labels, "goal_targets": goal_targets,
         "goal_actual": goal_actual, "goal_pct": goal_pct,
@@ -307,8 +370,26 @@ def compute_period(label, from_str, to_str):
 
 # ─── RUN ALL PERIODS ──────────────────────────────────────────────────────────
 
-mat_from = (TODAY.replace(day=1) - timedelta(days=365)).replace(day=1)
-mqt_from = (TODAY.replace(day=1) - timedelta(days=90)).replace(day=1)
+# Period "from" dates -- each starts on the 1st of the target month.
+# TO_DATE is the last day of the previous complete month (e.g. 2026-08-31).
+# MAT: exactly 12 complete months back from the 1st of the current month.
+_cur_first = TODAY.replace(day=1)
+_mat_y = _cur_first.year - (1 if _cur_first.month == 1 else 0)
+_mat_m = (_cur_first.month - 12 - 1) % 12 + 1
+mat_from = date(_mat_y if _mat_m >= _cur_first.month else _cur_first.year - 1,
+                _mat_m, 1)
+# Simpler: subtract 12 months directly
+_m12 = _cur_first.month - 12
+_y12 = _cur_first.year + (_m12 - 1) // 12
+_m12 = (_m12 - 1) % 12 + 1
+mat_from = date(_y12, _m12, 1)   # e.g. 2025-09-01  (12 complete months to 2026-08-31)
+
+# MQT: exactly 3 complete months back
+_m3 = _cur_first.month - 3
+_y3 = _cur_first.year + (_m3 - 1) // 12
+_m3 = (_m3 - 1) % 12 + 1
+mqt_from = date(_y3, _m3, 1)     # e.g. 2026-06-01  (3 complete months to 2026-08-31)
+
 ytd_from = TODAY.replace(month=1, day=1)
 
 print("Calculando MAT (12 meses)...")
@@ -345,7 +426,6 @@ header{{background:linear-gradient(135deg,#0f1f3d 0%,#1a3a6e 60%,#0f2a5a 100%);
 header h1{{font-size:1.3rem;font-weight:700}} header h1 span{{color:#60a5fa}}
 .period-badge{{background:#1e3a8a33;border:1px solid #3b82f644;border-radius:20px;padding:4px 12px;font-size:.73rem;color:#93c5fd;display:inline-block;margin-bottom:3px}}
 .updated{{font-size:.67rem;color:#475569;text-align:right}}
-/* TABS + PERIOD BUTTONS */
 .topbar{{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;gap:2px;overflow-x:auto;align-items:center;justify-content:space-between}}
 .tabs{{display:flex;gap:2px;overflow-x:auto;flex:1}}
 .tab{{padding:11px 18px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);font-size:.78rem;font-weight:500;letter-spacing:.3px;white-space:nowrap;transition:all .2s;user-select:none}}
@@ -355,12 +435,10 @@ header h1{{font-size:1.3rem;font-weight:700}} header h1 span{{color:#60a5fa}}
 .pbtn{{padding:5px 13px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid #334155;background:transparent;color:var(--text3);transition:all .2s;letter-spacing:.5px}}
 .pbtn:hover{{border-color:var(--blue);color:var(--text)}}
 .pbtn.active{{background:#3b82f622;border-color:var(--blue);color:#60a5fa}}
-/* PANELS */
 .panel{{display:none;padding:20px 28px;max-width:1800px;margin:0 auto}}
 .panel.active{{display:block}}
 .stitle{{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin:20px 0 11px;border-bottom:1px solid #1e293b;padding-bottom:7px;display:flex;align-items:center;gap:8px}}
 .stitle::before{{content:'';width:3px;height:12px;border-radius:2px;background:var(--blue);flex-shrink:0}}
-/* KPI */
 .kpi-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:14px}}
 .kpi{{background:var(--bg3);border:1px solid #334155;border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:transform .15s}}
 .kpi:hover{{transform:translateY(-2px);border-color:#475569}}
@@ -379,22 +457,17 @@ header h1{{font-size:1.3rem;font-weight:700}} header h1 span{{color:#60a5fa}}
 .kpi .sub{{font-size:.66rem;color:var(--text3);margin-top:5px;display:flex;align-items:center;gap:4px}}
 .badge{{display:inline-block;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:600}}
 .badge.up{{background:#10b98122;color:#34d399}}.badge.dn{{background:#ef444422;color:#f87171}}.badge.fl{{background:#f59e0b22;color:#fbbf24}}
-/* LAYOUTS */
 .g2{{display:grid;grid-template-columns:3fr 2fr;gap:13px;margin-bottom:13px}}
 .g2e{{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}}
 .g3{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px}}
 .g12{{display:grid;grid-template-columns:1fr 2fr;gap:13px;margin-bottom:13px}}
-/* CARDS */
 .card{{background:var(--bg3);border:1px solid #334155;border-radius:12px;padding:17px}}
 .card h3{{font-size:.66rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:13px;display:flex;align-items:center;gap:6px}}
 .card canvas{{max-height:270px}}
-/* HEALTH */
 .health-num{{font-size:3.8rem;font-weight:800;line-height:1;text-align:center}}
 .health-label{{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-top:3px}}
-/* PROGRESS */
 .prog{{background:#0f172a;border-radius:4px;height:7px;overflow:hidden;margin-top:5px}}
 .prog-fill{{height:100%;border-radius:4px;transition:width .4s}}
-/* TABLES */
 .dtable{{width:100%;border-collapse:collapse;font-size:.76rem}}
 .dtable th{{color:var(--text3);font-size:.6rem;text-transform:uppercase;letter-spacing:.6px;padding:7px 9px;border-bottom:1px solid #334155;text-align:left;font-weight:500}}
 .dtable td{{padding:7px 9px;border-bottom:1px solid #1e293b;color:var(--text)}}
@@ -427,7 +500,7 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
   <div class="tabs">
     <div class="tab active"  onclick="sw(0)">⚡ Executivo</div>
     <div class="tab"         onclick="sw(1)">💰 Financeiro</div>
-    <div class="tab"         onclick="sw(2)">🦷 Clínico</div>
+    <div class="tab"         onclick="sw(2)">🦷 Clinico</div>
     <div class="tab"         onclick="sw(3)">📊 Comercial</div>
     <div class="tab"         onclick="sw(4)">📅 Operacional</div>
   </div>
@@ -438,53 +511,38 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
   </div>
 </div>
 
-<!-- TAB 0 — EXECUTIVO -->
 <div class="panel active" id="p0">
   <div class="stitle">Resumo Executivo</div>
   <div class="kpi-grid">
     <div class="kpi green"><label>Receita Total</label><div class="val" id="kpi-rev">—</div><div class="sub" id="kpi-rev-sub"></div></div>
     <div class="kpi red"><label>Despesas Totais</label><div class="val" id="kpi-exp">—</div><div class="sub" id="kpi-exp-sub"></div></div>
-    <div class="kpi green" id="kpi-profit-card"><label>Resultado Líquido</label><div class="val" id="kpi-profit">—</div><div class="sub" id="kpi-profit-sub"></div></div>
-    <div class="kpi blue"><label>Produção Aprovada</label><div class="val" id="kpi-prod">—</div><div class="sub" id="kpi-prod-sub"></div></div>
-    <div class="kpi purple"><label>Taxa de Conversão</label><div class="val" id="kpi-conv">—</div><div class="sub" id="kpi-conv-sub"></div></div>
-    <div class="kpi amber"><label>Ticket Médio</label><div class="val" id="kpi-ticket">—</div></div>
+    <div class="kpi green" id="kpi-profit-card"><label>Resultado Liquido</label><div class="val" id="kpi-profit">—</div><div class="sub" id="kpi-profit-sub"></div></div>
+    <div class="kpi blue"><label>Producao Aprovada</label><div class="val" id="kpi-prod">—</div><div class="sub" id="kpi-prod-sub"></div></div>
+    <div class="kpi purple"><label>Taxa de Conversao</label><div class="val" id="kpi-conv">—</div><div class="sub" id="kpi-conv-sub"></div></div>
+    <div class="kpi amber"><label>Ticket Medio</label><div class="val" id="kpi-ticket">—</div></div>
     <div class="kpi cyan"><label>Agendamentos</label><div class="val" id="kpi-appts">—</div></div>
     <div class="kpi amber" id="kpi-noshow-card"><label>Taxa de No-show</label><div class="val" id="kpi-noshow">—</div><div class="sub" id="kpi-noshow-sub"></div></div>
   </div>
-
   <div class="g12">
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
-      <h3>🩺 Saúde do Negócio</h3>
+      <h3>🩺 Saude do Negocio</h3>
       <div style="text-align:center;padding:10px 0">
         <div class="health-num" id="health-num">—</div>
         <div class="health-label">/ 100</div>
         <div style="margin-top:8px;font-size:.78rem;font-weight:700;letter-spacing:1px" id="health-label-txt">—</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:9px;font-size:.71rem">
-        <div>
-          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Margem líquida</span><span id="score-margin-txt" style="color:var(--text)">—</span></div>
-          <div class="prog"><div class="prog-fill" id="score-margin-bar" style="width:0%;background:var(--green)"></div></div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Conversão comercial</span><span id="score-conv-txt" style="color:var(--text)">—</span></div>
-          <div class="prog"><div class="prog-fill" id="score-conv-bar" style="width:0%;background:var(--purple)"></div></div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Atingimento de metas</span><span id="score-goal-txt" style="color:var(--text)">—</span></div>
-          <div class="prog"><div class="prog-fill" id="score-goal-bar" style="width:0%;background:var(--amber)"></div></div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Comparecimento</span><span id="score-noshow-txt" style="color:var(--text)">—</span></div>
-          <div class="prog"><div class="prog-fill" id="score-noshow-bar" style="width:0%;background:var(--cyan)"></div></div>
-        </div>
+        <div><div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Margem liquida</span><span id="score-margin-txt" style="color:var(--text)">—</span></div><div class="prog"><div class="prog-fill" id="score-margin-bar" style="width:0%;background:var(--green)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Conversao comercial</span><span id="score-conv-txt" style="color:var(--text)">—</span></div><div class="prog"><div class="prog-fill" id="score-conv-bar" style="width:0%;background:var(--purple)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Atingimento de metas</span><span id="score-goal-txt" style="color:var(--text)">—</span></div><div class="prog"><div class="prog-fill" id="score-goal-bar" style="width:0%;background:var(--amber)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Comparecimento</span><span id="score-noshow-txt" style="color:var(--text)">—</span></div><div class="prog"><div class="prog-fill" id="score-noshow-bar" style="width:0%;background:var(--cyan)"></div></div></div>
       </div>
     </div>
     <div class="card">
-      <h3>📈 Tendência &amp; Projeção de Receita</h3>
+      <h3>📈 Tendencia &amp; Projecao de Receita</h3>
       <canvas id="trendChart"></canvas>
     </div>
   </div>
-
   <div class="g2e">
     <div class="card">
       <h3>⚖️ Ponto de Equilíbrio Mensal</h3>
@@ -938,10 +996,11 @@ function renderPeriod(p){{
   txt('kpi-conv-sub','de '+d.total_est.toLocaleString('pt-BR')+' orçamentos');
   txt('kpi-ticket',fmt(d.avg_ticket));
   txt('kpi-appts',d.total_appts.toLocaleString('pt-BR'));
-  txt('kpi-noshow',d.noshow_rate+'%');
-  txt('kpi-noshow-sub',d.total_misses+' faltas no período');
+  const noshowVal = d.noshow_rate===null ? 'N/D' : d.noshow_rate+'%';
+  txt('kpi-noshow', noshowVal);
+  txt('kpi-noshow-sub',d.noshow_rate===null ? 'Dados indisponíveis para este período' : d.total_misses+' faltas no período');
   const nsCard=document.getElementById('kpi-noshow-card');
-  if(nsCard) nsCard.className='kpi '+(d.noshow_rate<20?'amber':'red');
+  if(nsCard) nsCard.className='kpi '+(d.noshow_rate===null?'amber':d.noshow_rate<20?'amber':'red');
 
   // ── Health Score ──
   style('health-num','color',d.health_color);
@@ -992,9 +1051,9 @@ function renderPeriod(p){{
   // ── Operacional KPIs ──
   txt('op-appts',d.total_appts.toLocaleString('pt-BR'));
   txt('op-miss',d.total_misses.toLocaleString('pt-BR'));
-  txt('op-noshow',d.noshow_rate+'%');
+  txt('op-noshow', d.noshow_rate===null ? 'N/D' : d.noshow_rate+'%');
   const opCard=document.getElementById('op-noshow-card');
-  if(opCard) opCard.className='kpi '+(d.noshow_rate<20?'amber':'red');
+  if(opCard) opCard.className='kpi '+(d.noshow_rate===null?'amber':d.noshow_rate<20?'amber':'red');
   txt('op-profs',d.n_profs);
 
   // ── Tables ──
