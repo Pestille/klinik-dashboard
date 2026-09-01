@@ -219,7 +219,7 @@ def compute_period(label, from_str, to_str):
         "september":"Set","october":"Out","november":"Nov","december":"Dez",
     }
     def _month_label(raw):
-        """Convert API month string to PT-BR label, e.g. 'September 2026' -> 'Set/26'."""
+        """Convert API month string to PT-BR label, e.g. 'September 2026' → 'Set/26'."""
         s = (raw or "").strip()
         for en, pt in _EN_TO_PT.items():
             if s.lower().startswith(en):
@@ -250,11 +250,11 @@ def compute_period(label, from_str, to_str):
     appt_by_month = defaultdict(int)
     for a in appt_list:
         pid  = str(a.get("Dentist_PersonId",""))
-        name = prof_map.get(pid, f"Dr(a). {pid[:6]}" if pid else "Nao informado")
+        name = prof_map.get(pid, f"Dr(a). {pid[:6]}" if pid else "Não informado")
         appt_by_prof[name] += 1
         cat = a.get("CategoryDescription","Sem categoria") or "Sem categoria"
         appt_by_cat[cat] += 1
-        src = a.get("HowDidMeet","") or "Nao informado"
+        src = a.get("HowDidMeet","") or "Não informado"
         how_met_d[src] += 1
         dt = a.get("Date", a.get("AppointmentDate",""))
         if dt and len(dt) >= 7: appt_by_month[dt[:7]] += 1
@@ -272,11 +272,11 @@ def compute_period(label, from_str, to_str):
     margin_pct   = round(total_profit / total_rev * 100, 1) if total_rev > 0 else 0
     # noshow_rate: only compute when we have real appointment data.
     # If appts=0 but misses>0 it means the /appointment/list API returned nothing
-    # (timeout for long periods) -- report None rather than a fake 100%.
+    # (timeout for long periods) — report None rather than a fake 100%.
     if total_appts > 0:
         noshow_rate = round(total_misses / (total_appts + total_misses) * 100, 1)
     elif total_misses > 0 and total_appts == 0:
-        noshow_rate = None   # API didn't return appointment data -- show N/D
+        noshow_rate = None   # API didn't return appointment data — show N/D
     else:
         noshow_rate = 0
 
@@ -322,7 +322,7 @@ def compute_period(label, from_str, to_str):
         "total_rej": total_rej, "total_est": total_est,
         "conv_rate": conv_rate, "avg_ticket": round(avg_ticket,2),
         "total_appts": total_appts, "total_misses": total_misses,
-        "noshow_rate": noshow_rate,   # None = API sem dados (periodo longo)
+        "noshow_rate": noshow_rate,   # None = API sem dados (período longo)
         "health_score": health_score,
         "health_color": health_color, "mom_rev_pct": mom_rev_pct,
         "mom_exp_pct": mom_exp_pct, "avg_goal_pct": round(avg_goal_pct,1),
@@ -370,12 +370,12 @@ def compute_period(label, from_str, to_str):
 
 # ─── RUN ALL PERIODS ──────────────────────────────────────────────────────────
 
-# Period "from" dates -- each starts on the 1st of the target month.
+# Period "from" dates — each starts on the 1st of the target month.
 # TO_DATE is the last day of the previous complete month (e.g. 2026-08-31).
 # MAT: exactly 12 complete months back from the 1st of the current month.
 _cur_first = TODAY.replace(day=1)
 _mat_y = _cur_first.year - (1 if _cur_first.month == 1 else 0)
-_mat_m = (_cur_first.month - 12 - 1) % 12 + 1
+_mat_m = (_cur_first.month - 12 - 1) % 12 + 1          # e.g. Sep/25
 mat_from = date(_mat_y if _mat_m >= _cur_first.month else _cur_first.year - 1,
                 _mat_m, 1)
 # Simpler: subtract 12 months directly
@@ -426,6 +426,7 @@ header{{background:linear-gradient(135deg,#0f1f3d 0%,#1a3a6e 60%,#0f2a5a 100%);
 header h1{{font-size:1.3rem;font-weight:700}} header h1 span{{color:#60a5fa}}
 .period-badge{{background:#1e3a8a33;border:1px solid #3b82f644;border-radius:20px;padding:4px 12px;font-size:.73rem;color:#93c5fd;display:inline-block;margin-bottom:3px}}
 .updated{{font-size:.67rem;color:#475569;text-align:right}}
+/* TABS + PERIOD BUTTONS */
 .topbar{{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;gap:2px;overflow-x:auto;align-items:center;justify-content:space-between}}
 .tabs{{display:flex;gap:2px;overflow-x:auto;flex:1}}
 .tab{{padding:11px 18px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);font-size:.78rem;font-weight:500;letter-spacing:.3px;white-space:nowrap;transition:all .2s;user-select:none}}
@@ -435,10 +436,12 @@ header h1{{font-size:1.3rem;font-weight:700}} header h1 span{{color:#60a5fa}}
 .pbtn{{padding:5px 13px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid #334155;background:transparent;color:var(--text3);transition:all .2s;letter-spacing:.5px}}
 .pbtn:hover{{border-color:var(--blue);color:var(--text)}}
 .pbtn.active{{background:#3b82f622;border-color:var(--blue);color:#60a5fa}}
+/* PANELS */
 .panel{{display:none;padding:20px 28px;max-width:1800px;margin:0 auto}}
 .panel.active{{display:block}}
 .stitle{{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin:20px 0 11px;border-bottom:1px solid #1e293b;padding-bottom:7px;display:flex;align-items:center;gap:8px}}
 .stitle::before{{content:'';width:3px;height:12px;border-radius:2px;background:var(--blue);flex-shrink:0}}
+/* KPI */
 .kpi-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:14px}}
 .kpi{{background:var(--bg3);border:1px solid #334155;border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:transform .15s}}
 .kpi:hover{{transform:translateY(-2px);border-color:#475569}}
@@ -457,17 +460,22 @@ header h1{{font-size:1.3rem;font-weight:700}} header h1 span{{color:#60a5fa}}
 .kpi .sub{{font-size:.66rem;color:var(--text3);margin-top:5px;display:flex;align-items:center;gap:4px}}
 .badge{{display:inline-block;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:600}}
 .badge.up{{background:#10b98122;color:#34d399}}.badge.dn{{background:#ef444422;color:#f87171}}.badge.fl{{background:#f59e0b22;color:#fbbf24}}
+/* LAYOUTS */
 .g2{{display:grid;grid-template-columns:3fr 2fr;gap:13px;margin-bottom:13px}}
 .g2e{{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}}
 .g3{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px}}
 .g12{{display:grid;grid-template-columns:1fr 2fr;gap:13px;margin-bottom:13px}}
+/* CARDS */
 .card{{background:var(--bg3);border:1px solid #334155;border-radius:12px;padding:17px}}
 .card h3{{font-size:.66rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:13px;display:flex;align-items:center;gap:6px}}
 .card canvas{{max-height:270px}}
+/* HEALTH */
 .health-num{{font-size:3.8rem;font-weight:800;line-height:1;text-align:center}}
 .health-label{{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-top:3px}}
+/* PROGRESS */
 .prog{{background:#0f172a;border-radius:4px;height:7px;overflow:hidden;margin-top:5px}}
 .prog-fill{{height:100%;border-radius:4px;transition:width .4s}}
+/* TABLES */
 .dtable{{width:100%;border-collapse:collapse;font-size:.76rem}}
 .dtable th{{color:var(--text3);font-size:.6rem;text-transform:uppercase;letter-spacing:.6px;padding:7px 9px;border-bottom:1px solid #334155;text-align:left;font-weight:500}}
 .dtable td{{padding:7px 9px;border-bottom:1px solid #1e293b;color:var(--text)}}
@@ -500,7 +508,7 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
   <div class="tabs">
     <div class="tab active"  onclick="sw(0)">⚡ Executivo</div>
     <div class="tab"         onclick="sw(1)">💰 Financeiro</div>
-    <div class="tab"         onclick="sw(2)">🦷 Clinico</div>
+    <div class="tab"         onclick="sw(2)">🦷 Clínico</div>
     <div class="tab"         onclick="sw(3)">📊 Comercial</div>
     <div class="tab"         onclick="sw(4)">📅 Operacional</div>
   </div>
@@ -511,38 +519,53 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
   </div>
 </div>
 
+<!-- TAB 0 — EXECUTIVO -->
 <div class="panel active" id="p0">
   <div class="stitle">Resumo Executivo</div>
   <div class="kpi-grid">
     <div class="kpi green"><label>Receita Total</label><div class="val" id="kpi-rev">—</div><div class="sub" id="kpi-rev-sub"></div></div>
     <div class="kpi red"><label>Despesas Totais</label><div class="val" id="kpi-exp">—</div><div class="sub" id="kpi-exp-sub"></div></div>
-    <div class="kpi green" id="kpi-profit-card"><label>Resultado Liquido</label><div class="val" id="kpi-profit">—</div><div class="sub" id="kpi-profit-sub"></div></div>
-    <div class="kpi blue"><label>Producao Aprovada</label><div class="val" id="kpi-prod">—</div><div class="sub" id="kpi-prod-sub"></div></div>
-    <div class="kpi purple"><label>Taxa de Conversao</label><div class="val" id="kpi-conv">—</div><div class="sub" id="kpi-conv-sub"></div></div>
-    <div class="kpi amber"><label>Ticket Medio</label><div class="val" id="kpi-ticket">—</div></div>
+    <div class="kpi green" id="kpi-profit-card"><label>Resultado Líquido</label><div class="val" id="kpi-profit">—</div><div class="sub" id="kpi-profit-sub"></div></div>
+    <div class="kpi blue"><label>Produção Aprovada</label><div class="val" id="kpi-prod">—</div><div class="sub" id="kpi-prod-sub"></div></div>
+    <div class="kpi purple"><label>Taxa de Conversão</label><div class="val" id="kpi-conv">—</div><div class="sub" id="kpi-conv-sub"></div></div>
+    <div class="kpi amber"><label>Ticket Médio</label><div class="val" id="kpi-ticket">—</div></div>
     <div class="kpi cyan"><label>Agendamentos</label><div class="val" id="kpi-appts">—</div></div>
     <div class="kpi amber" id="kpi-noshow-card"><label>Taxa de No-show</label><div class="val" id="kpi-noshow">—</div><div class="sub" id="kpi-noshow-sub"></div></div>
   </div>
+
   <div class="g12">
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
-      <h3>🩺 Saude do Negocio</h3>
+      <h3>🩺 Saúde do Negócio</h3>
       <div style="text-align:center;padding:10px 0">
         <div class="health-num" id="health-num">—</div>
         <div class="health-label">/ 100</div>
         <div style="margin-top:8px;font-size:.78rem;font-weight:700;letter-spacing:1px" id="health-label-txt">—</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:9px;font-size:.71rem">
-        <div><div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Margem liquida</span><span id="score-margin-txt" style="color:var(--text)">—</span></div><div class="prog"><div class="prog-fill" id="score-margin-bar" style="width:0%;background:var(--green)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Conversao comercial</span><span id="score-conv-txt" style="color:var(--text)">—</span></div><div class="prog"><div class="prog-fill" id="score-conv-bar" style="width:0%;background:var(--purple)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Atingimento de metas</span><span id="score-goal-txt" style="color:var(--text)">—</span></div><div class="prog"><div class="prog-fill" id="score-goal-bar" style="width:0%;background:var(--amber)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Comparecimento</span><span id="score-noshow-txt" style="color:var(--text)">—</span></div><div class="prog"><div class="prog-fill" id="score-noshow-bar" style="width:0%;background:var(--cyan)"></div></div></div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Margem líquida</span><span id="score-margin-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-margin-bar" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Conversão comercial</span><span id="score-conv-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-conv-bar" style="width:0%;background:var(--purple)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Atingimento de metas</span><span id="score-goal-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-goal-bar" style="width:0%;background:var(--amber)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:3px"><span>Comparecimento</span><span id="score-noshow-txt" style="color:var(--text)">—</span></div>
+          <div class="prog"><div class="prog-fill" id="score-noshow-bar" style="width:0%;background:var(--cyan)"></div></div>
+        </div>
       </div>
     </div>
     <div class="card">
-      <h3>📈 Tendencia &amp; Projecao de Receita</h3>
+      <h3>📈 Tendência &amp; Projeção de Receita</h3>
       <canvas id="trendChart"></canvas>
     </div>
   </div>
+
   <div class="g2e">
     <div class="card">
       <h3>⚖️ Ponto de Equilíbrio Mensal</h3>
@@ -679,7 +702,7 @@ function sw(n){{
 // ── Formatters ────────────────────────────────────────────────────────────────
 function fmt(v){{
   if(v==null||isNaN(v)) return 'R$ 0,00';
-  return 'R$ '+Number(v).toLocaleString('pt-BR',{{minimumFractionDigits:2,maximumFractionDigits:2}});
+  return 'R$ '+Number(v).toLocaleString('pt-BR',{{minimumFractionDigits:2,maximumFractionDigits:2}}});
 }}
 function fmtk(v){{
   if(v==null||isNaN(v)) return 'R$ 0';
@@ -706,10 +729,10 @@ const scaleN={{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G2}}}};
 const scaleP={{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},grid:{{color:G2}}}};
 const scaleX={{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}};
 const leg={{labels:{{color:C,boxWidth:11,font:{{size:10}}}}}};
-const legR={{position:'right',labels:{{color:C,boxWidth:10,font:{{size:10}}}}}};
+const legR={{position:"right',labels:{{color:C,boxWidth:10,font:{{size:10}}}}}};
 
 function initCharts(){{
-  const d=PERIODS.mat;
+  const d=PERIDROS.mat;
   trendChart=new Chart(document.getElementById('trendChart'),{{type:'line',
     data:{{labels:d.proj_labels,datasets:[
       {{label:'Receita',data:d.all_rev_hist,borderColor:'#10b981',backgroundColor:'#10b98122',fill:true,tension:.4,pointRadius:3,spanGaps:false}},
@@ -720,7 +743,7 @@ function initCharts(){{
   }});
   finChart=new Chart(document.getElementById('finChart'),{{type:'bar',
     data:{{labels:d.fin_labels,datasets:[
-      {{label:'Receita',data:d.fin_rev,backgroundColor:'#10b98133',borderColor:'#10b981',borderWidth:2,borderRadius:3}},
+      {{label:'Receita',data:d.fin_rev,baɭgroundColor:'#10b98133',borderColor:'#10b981',borderWidth:2,borderRadius:3}},
       {{label:'Despesa',data:d.fin_exp,backgroundColor:'#ef444433',borderColor:'#ef4444',borderWidth:2,borderRadius:3}},
       {{label:'Resultado',data:d.fin_profit,type:'line',borderColor:'#6366f1',backgroundColor:'#6366f122',fill:true,tension:.4,yAxisID:'y'}},
     ]}},options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleR}}}}
@@ -734,8 +757,8 @@ function initCharts(){{
     data:{{labels:d.cat_labels,datasets:[{{label:'R$',data:d.cat_vals,
       backgroundColor:COLORS.slice(0,d.cat_labels.length).map(c=>c+'99'),
       borderColor:COLORS.slice(0,d.cat_labels.length),borderWidth:2}}]}},
-    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{{legend:{{display:false}}}},
-      scales:{{x:{{ticks:{{color:'#64748b',callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}},y:{{ticks:{{color:'#94a3b8',font:{{size:10}}}},grid:{{color:G1}}}}}}
+    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',interaction:{{mode:'index',intersect:false}},plugins:{{legend:{{display:false}}}},
+      scales:{{x:{{ticks:{{color:'#64748b',callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}},y:{{ticks:{{color:'#94a3b8',font:{{size:10}}}},grid:{{color:G1}}}}}}}
     }}
   }});
   espChart=new Chart(document.getElementById('espChart'),{{type:'line',
@@ -744,7 +767,7 @@ function initCharts(){{
   }});
   apptChart=new Chart(document.getElementById('apptChart'),{{type:'bar',
     data:{{labels:d.appt_prof.map(x=>x.name),datasets:[{{label:'Agendamentos',data:d.appt_prof.map(x=>x.cnt),backgroundColor:'#8b5cf655',borderColor:'#8b5cf6',borderWidth:2,borderRadius:3}}]}},
-    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{{legend:{{display:false}}}},scales:{{x:scaleN,y:{{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}}}}}}
+    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',interaction:{{mode:'index',intersect:false}},plugins:{{legend:{{display:false}}}},scales:{{x:scaleN,y:{{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}}}}}}
   }});
   catApptChart=new Chart(document.getElementById('catApptChart'),{{type:'doughnut',
     data:{{labels:d.appt_cat.map(x=>x.name),datasets:[{{data:d.appt_cat.map(x=>x.cnt),
@@ -959,9 +982,7 @@ function updateCharts(d){{
   howMetChart.data.datasets[0].borderColor=COLORS.slice(0,d.how_met.length);
   howMetChart.update();
   // Appt by month
-  apptMonthChart.data.labels=d.appt_month_labels;
-  apptMonthChart.data.datasets[0].data=d.appt_month_vals;
-  apptMonthChart.update();
+  apptMonthChartptMonthChart.update();
   // Miss
   missChart.data.labels=d.miss_labels;
   missChart.data.datasets[0].data=d.miss_vals;
