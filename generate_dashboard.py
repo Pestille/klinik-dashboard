@@ -758,7 +758,7 @@ function initCharts(){{
       backgroundColor:COLORS.slice(0,d.cat_labels.length).map(c=>c+'99'),
       borderColor:COLORS.slice(0,d.cat_labels.length),borderWidth:2}}]}},
     options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',interaction:{{mode:'index',intersect:false}},plugins:{{legend:{{display:false}}}},
-      scales:{{x:{{ticks:{{color:'#64748b',callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}},y:{{ticks:{{color:'#94a3b8',font:{{size:10}}}},grid:{{color:G1}}}}}}}
+      scales:{{x:{{ticks:{{color:'#64748b',callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}},y:{{ticks:{{color:'#94a3b8',font:{{size:10}}}},grid:{{color:G1}}}}}}
     }}
   }});
   espChart=new Chart(document.getElementById('espChart'),{{type:'line',
