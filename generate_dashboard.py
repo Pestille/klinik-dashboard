@@ -702,7 +702,7 @@ function sw(n){{
 // ── Formatters ────────────────────────────────────────────────────────────────
 function fmt(v){{
   if(v==null||isNaN(v)) return 'R$ 0,00';
-  return 'R$ '+Number(v).toLocaleString('pt-BR',{{minimumFractionDigits:2,maximumFractionDigits:2}}});
+  return 'R$ '+Number(v).toLocaleString('pt-BR',{{minimumFractionDigits:2,maximumFractionDigits:2}});
 }}
 function fmtk(v){{
   if(v==null||isNaN(v)) return 'R$ 0';
@@ -729,10 +729,10 @@ const scaleN={{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G2}}}};
 const scaleP={{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},grid:{{color:G2}}}};
 const scaleX={{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}};
 const leg={{labels:{{color:C,boxWidth:11,font:{{size:10}}}}}};
-const legR={{position:"right',labels:{{color:C,boxWidth:10,font:{{size:10}}}}}};
+const legR={{position:'right',labels:{{color:C,boxWidth:10,font:{{size:10}}}}}};
 
 function initCharts(){{
-  const d=PERIDROS.mat;
+  const d=PERIODS.mat;
   trendChart=new Chart(document.getElementById('trendChart'),{{type:'line',
     data:{{labels:d.proj_labels,datasets:[
       {{label:'Receita',data:d.all_rev_hist,borderColor:'#10b981',backgroundColor:'#10b98122',fill:true,tension:.4,pointRadius:3,spanGaps:false}},
@@ -743,7 +743,7 @@ function initCharts(){{
   }});
   finChart=new Chart(document.getElementById('finChart'),{{type:'bar',
     data:{{labels:d.fin_labels,datasets:[
-      {{label:'Receita',data:d.fin_rev,baɭgroundColor:'#10b98133',borderColor:'#10b981',borderWidth:2,borderRadius:3}},
+      {{label:'Receita',data:d.fin_rev,backgroundColor:'#10b98133',borderColor:'#10b981',borderWidth:2,borderRadius:3}},
       {{label:'Despesa',data:d.fin_exp,backgroundColor:'#ef444433',borderColor:'#ef4444',borderWidth:2,borderRadius:3}},
       {{label:'Resultado',data:d.fin_profit,type:'line',borderColor:'#6366f1',backgroundColor:'#6366f122',fill:true,tension:.4,yAxisID:'y'}},
     ]}},options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleR}}}}
@@ -982,7 +982,9 @@ function updateCharts(d){{
   howMetChart.data.datasets[0].borderColor=COLORS.slice(0,d.how_met.length);
   howMetChart.update();
   // Appt by month
-  apptMonthChartptMonthChart.update();
+  apptMonthChart.data.labels=d.appt_month_labels;
+  apptMonthChart.data.datasets[0].data=d.appt_month_vals;
+  apptMonthChart.update();
   // Miss
   missChart.data.labels=d.miss_labels;
   missChart.data.datasets[0].data=d.miss_vals;
