@@ -3,7 +3,7 @@ Dashboard Klinik Odontologia — v2.1 Multi-Period
 Filtros: MAT (12m) | MQT (3m) | YTD
 """
 
-import base64, requests, json, os, re
+import base64, requests, json, os, re, calendar as _cal
 from datetime import datetime, timedelta, date
 from collections import defaultdict
 
@@ -400,6 +400,96 @@ print("Calculando YTD (ano atual)...")
 ytd_data = compute_period("YTD", ytd_from.strftime("%Y-%m-%d"), TO_STR)
 
 PERIODS = {"mat": mat_data, "mqt": mqt_data, "ytd": ytd_data}
+
+# ─── DAILY PRODUCTIVITY — mês atual ─────────────────────────────────────────
+CHAIR_MIN   = 600        # 10 h × 60 min disponíveis por cadeira/dia
+DEFAULT_DUR = 60         # minutos assumidos por agendamento quando a API não retorna duração
+CHAIR1_KW   = {"maisa","fernanda","pangoni","joão","joao","schussler","nelson","oshiro"}
+CHAIR2_KW   = {"adrieli","araujo","barbara","casari","caroline","carol","preus"}
+
+def _dentist_chair(full_name):
+    n = full_name.lower()
+    if any(k in n for k in CHAIR1_KW): return 1
+    if any(k in n for k in CHAIR2_KW): return 2
+    return 0
+
+def _biz_days(year, month, up_to=None):
+    _, last = _cal.monthrange(year, month)
+    end = min(up_to or last, last)
+    return [date(year, month, d).strftime("%Y-%m-%d")
+            for d in range(1, end + 1) if date(year, month, d).weekday() < 5]
+
+curr_y, curr_m = TODAY.year, TODAY.month
+biz_days = _biz_days(curr_y, curr_m, TODAY.day)
+biz_set  = set(biz_days)
+
+print("Buscando agendamentos do mês atual para produtividade diária...")
+curr_appts_raw = api("/appointment/list",
+                     TODAY.replace(day=1).strftime("%Y-%m-%d"),
+                     TODAY.strftime("%Y-%m-%d")) or []
+curr_appts = curr_appts_raw if isinstance(curr_appts_raw, list) \
+             else curr_appts_raw.get("values", [])
+print(f"  → {len(curr_appts)} agendamentos")
+
+daily_sched   = defaultdict(int)
+daily_chair1  = defaultdict(int)
+daily_chair2  = defaultdict(int)
+daily_by_dent = defaultdict(lambda: defaultdict(int))
+dent_set_d    = set()
+
+for a in curr_appts:
+    dt = a.get("Date", a.get("AppointmentDate", ""))
+    if not dt or len(dt) < 10:
+        continue
+    day = dt[:10]
+    if day not in biz_set:
+        continue
+    daily_sched[day] += 1
+    pid  = str(a.get("Dentist_PersonId", ""))
+    full = prof_map.get(pid, "Outros")
+    # Short first name for chart labels
+    clean = full.replace("Dra. ", "").replace("Dr. ", "").replace("DRA ", "").replace("DR ", "")
+    short = clean.split()[0].capitalize() if clean.split() else "Outros"
+    dent_set_d.add(short)
+    daily_by_dent[day][short] += 1
+    dur = float(a.get("Duration", 0) or a.get("DurationMinutes", 0) or DEFAULT_DUR)
+    ch  = _dentist_chair(full)
+    if ch == 1:
+        daily_chair1[day] += int(dur)
+    elif ch == 2:
+        daily_chair2[day] += int(dur)
+
+n_elapsed_d  = max(len(biz_days), 1)
+n_done_d     = max(len([d for d in biz_days if daily_sched[d] > 0]), 1)
+avg_sched_d  = round(sum(daily_sched.values()) / n_elapsed_d, 1)
+avg_appts_d  = round(sum(daily_sched.values()) / n_done_d, 1)
+n_biz_mo     = max(len(_biz_days(curr_y, curr_m)), 1)
+mqt_mo_rev   = PERIODS["mqt"]["total_rev"] / max(PERIODS["mqt"]["n_months"], 1)
+avg_daily_rev = round(mqt_mo_rev / n_biz_mo, 2)
+c1_util = [min(150, round(daily_chair1[d] / CHAIR_MIN * 100, 1)) for d in biz_days]
+c2_util = [min(150, round(daily_chair2[d] / CHAIR_MIN * 100, 1)) for d in biz_days]
+avg_c1  = round(sum(c1_util) / n_elapsed_d, 1)
+avg_c2  = round(sum(c2_util) / n_elapsed_d, 1)
+dent_names_d = sorted(dent_set_d)
+
+DAILY = {
+    "biz_days":     biz_days,
+    "day_labels":   [d[8:] + "/" + d[5:7] for d in biz_days],
+    "sched_vals":   [daily_sched[d] for d in biz_days],
+    "chair1_util":  c1_util,
+    "chair2_util":  c2_util,
+    "avg_sched_d":  avg_sched_d,
+    "avg_appts_d":  avg_appts_d,
+    "avg_daily_rev": avg_daily_rev,
+    "avg_c1":       avg_c1,
+    "avg_c2":       avg_c2,
+    "dent_names":   dent_names_d,
+    "dent_series":  [
+        {"name": n, "vals": [daily_by_dent[d].get(n, 0) for d in biz_days]}
+        for n in dent_names_d
+    ],
+    "n_appts_mo":   sum(daily_sched.values()),
+}
 gerado_em = datetime.now().strftime("%d/%m/%Y %H:%M")
 
 # ─── HTML ─────────────────────────────────────────────────────────────────────
@@ -511,6 +601,7 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
     <div class="tab"         onclick="sw(2)">🦷 Clínico</div>
     <div class="tab"         onclick="sw(3)">📊 Comercial</div>
     <div class="tab"         onclick="sw(4)">📅 Operacional</div>
+    <div class="tab"         onclick="sw(5)">📈 Produtividade</div>
   </div>
   <div class="period-btns">
     <button class="pbtn active" data-p="mat" onclick="switchPeriod('mat')">MAT</button>
@@ -687,10 +778,45 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
   </div>
 </div>
 
+<!-- TAB 5 — PRODUTIVIDADE DIÁRIA -->
+<div class="panel" id="p5">
+  <div class="stitle">Produtividade Diária — {TODAY.strftime("%B/%Y").capitalize()}</div>
+  <div class="kpi-grid">
+    <div class="kpi cyan"><label>Méd. Agend./Dia</label><div class="val" id="pd-sched">—</div></div>
+    <div class="kpi green"><label>Méd. Atend./Dia</label><div class="val" id="pd-done">—</div></div>
+    <div class="kpi indigo"><label>Receita Méd./Dia</label><div class="val" id="pd-rev">—</div></div>
+    <div class="kpi blue"><label>Ocup. Cadeira 1</label><div class="val" id="pd-c1">—</div></div>
+    <div class="kpi purple"><label>Ocup. Cadeira 2</label><div class="val" id="pd-c2">—</div></div>
+  </div>
+  <div class="g2e">
+    <div class="card"><h3>Agendamentos por Dia Útil</h3><canvas id="schedDayChart"></canvas></div>
+    <div class="card"><h3>Atendimentos por Dentista / Dia</h3><canvas id="dentDayChart"></canvas></div>
+  </div>
+  <div class="g2e">
+    <div class="card">
+      <h3>Ocupação das Cadeiras (%)</h3>
+      <div style="font-size:.71rem;color:var(--text3);margin:-2px 0 10px">C-1: Maisa · Fernanda · João · Nelson &nbsp;|&nbsp; C-2: Adrieli · Barbara · Caroline &nbsp;·&nbsp; Base: 600 min/dia. Acima de 100% = horas extras.</div>
+      <canvas id="chairChart"></canvas>
+    </div>
+    <div class="card">
+      <h3>Resumo por Dentista — Mês Atual</h3>
+      <table class="dtable">
+        <thead><tr><th>Dentista</th><th class="num">Agend.</th><th class="num">Méd./Dia</th><th>Cadeira</th></tr></thead>
+        <tbody id="dent-day-rows"></tbody>
+      </table>
+      <div style="margin-top:14px;font-size:.75rem;color:var(--text3)">
+        Receita diária estimada (base MQT ÷ dias úteis do mês):<br>
+        <strong id="pd-rev2" style="color:var(--green);font-size:.95rem">—</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer>Klinik Odontologia — Dashboard Executivo v2.1 — Dados via Clinicorp API — {gerado_em}</footer>
 
 <script>
 const PERIODS = {J(PERIODS)};
+const DAILY   = {J(DAILY)};
 const COLORS  = {J(COLORS)};
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -721,7 +847,8 @@ function style(id,prop,val){{const e=document.getElementById(id);if(e)e.style[pr
 
 // ── Chart instances ───────────────────────────────────────────────────────────
 let trendChart,finChart,marginChart,catChart,espChart,apptChart,catApptChart,
-    convChart,goalChart,howMetChart,apptMonthChart,missChart,howMetChart2;
+    convChart,goalChart,howMetChart,apptMonthChart,missChart,howMetChart2,
+    schedDayChart,dentDayChart,chairChart;
 
 const C='#94a3b8',G1='#1e293b',G2='#334155';
 const scaleR={{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}};
@@ -1096,7 +1223,73 @@ function switchPeriod(p){{
 }}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+// ── Produtividade Diária — estático (sempre mês atual) ────────────────────────
+function buildDentDayRows(d){{
+  const c1set=new Set(['Maisa','Fernanda','João','Joao','Schussler','Nelson','Oshiro','Pangoni']);
+  return d.dent_series.map(s=>{{
+    const total=s.vals.reduce((a,b)=>a+b,0);
+    const worked=s.vals.filter(v=>v>0).length||1;
+    const avg=(total/worked).toFixed(1);
+    const chair=c1set.has(s.name)?'C-1':'C-2';
+    return `<tr><td>${{s.name}}</td><td class="num">${{total}}</td><td class="num">${{avg}}</td><td>${{chair}}</td></tr>`;
+  }}).join('');
+}}
+
+function initDailyCharts(){{
+  const d=DAILY;
+  const lbls=d.day_labels;
+  txt('pd-sched',d.avg_sched_d);
+  txt('pd-done', d.avg_appts_d);
+  txt('pd-rev',  fmt(d.avg_daily_rev));
+  txt('pd-rev2', fmt(d.avg_daily_rev));
+  txt('pd-c1',   d.avg_c1+'%');
+  txt('pd-c2',   d.avg_c2+'%');
+  html('dent-day-rows',buildDentDayRows(d));
+  schedDayChart=new Chart(document.getElementById('schedDayChart'),{{
+    type:'line',
+    data:{{labels:lbls,datasets:[{{
+      label:'Agendamentos',data:d.sched_vals,
+      borderColor:'#06b6d4',backgroundColor:'#06b6d422',
+      fill:true,tension:.35,pointRadius:4,pointHoverRadius:6
+    }}]}},
+    options:{{responsive:true,maintainAspectRatio:true,
+      plugins:{{legend:leg,tooltip:{{callbacks:{{label:ctx=>ctx.parsed.y+' agend.'}}}}}},
+      scales:{{x:scaleX,y:{{...scaleN,beginAtZero:true}}}}
+    }}
+  }});
+  const dentColors=COLORS.slice(0,d.dent_names.length);
+  dentDayChart=new Chart(document.getElementById('dentDayChart'),{{
+    type:'line',
+    data:{{labels:lbls,datasets:d.dent_series.map((s,i)=>
+      ({{label:s.name,data:s.vals,
+         borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',
+         tension:.35,pointRadius:3,pointHoverRadius:5,fill:false}}))
+    }},
+    options:{{responsive:true,maintainAspectRatio:true,
+      interaction:{{mode:'index',intersect:false}},
+      plugins:{{legend:leg}},
+      scales:{{x:scaleX,y:{{...scaleN,beginAtZero:true}}}}
+    }}
+  }});
+  chairChart=new Chart(document.getElementById('chairChart'),{{
+    type:'line',
+    data:{{labels:lbls,datasets:[
+      {{label:'Cadeira 1',data:d.chair1_util,borderColor:'#3b82f6',backgroundColor:'#3b82f622',fill:true,tension:.35,pointRadius:4}},
+      {{label:'Cadeira 2',data:d.chair2_util,borderColor:'#8b5cf6',backgroundColor:'#8b5cf622',fill:true,tension:.35,pointRadius:4}},
+    ]}},
+    options:{{responsive:true,maintainAspectRatio:true,
+      interaction:{{mode:'index',intersect:false}},
+      plugins:{{legend:leg,tooltip:{{callbacks:{{label:ctx=>ctx.parsed.y+'%'}}}}}},
+      scales:{{x:scaleX,y:{{
+        ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},
+        grid:{{color:G2}},beginAtZero:true,suggestedMax:100
+      }}}}
+    }}
+  }});
+}}
+
 initCharts();
+initDailyCharts();
 renderPeriod('mat');
 </script>
 </body>
