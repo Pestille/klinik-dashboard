@@ -854,10 +854,10 @@ let trendChart,finChart,marginChart,catChart,espChart,apptChart,catApptChart,
     schedDayChart,dentDayChart,chairChart;
 
 const C='#94a3b8',G1='#1e293b',G2='#334155';
-const scaleR={{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}};
-const scaleN={{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G2}}}};
-const scaleP={{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},grid:{{color:G2}}}};
-const scaleX={{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}};
+const mkR=()=>({{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}});
+const mkN=()=>({{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G2}}}});
+const mkP=()=>({{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},grid:{{color:G2}}}});
+const mkX=()=>({{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}});
 const leg={{labels:{{color:C,boxWidth:11,font:{{size:10}}}}}};
 const legR={{position:'right',labels:{{color:C,boxWidth:10,font:{{size:10}}}}}};
 
@@ -870,19 +870,19 @@ function initCharts(){{
       {{label:'Proj. Receita',data:d.proj_rev_line,borderColor:'#10b981',borderDash:[7,3],backgroundColor:'transparent',tension:.4,pointRadius:5,pointStyle:'triangle',spanGaps:false}},
       {{label:'Proj. Despesa',data:d.proj_exp_line,borderColor:'#ef4444',borderDash:[7,3],backgroundColor:'transparent',tension:.4,pointRadius:5,pointStyle:'triangle',spanGaps:false}},
       {{label:'Meta R$100k',data:d.proj_labels.map(()=>META),borderColor:'#f59e0b',borderDash:[5,5],backgroundColor:'transparent',tension:0,pointRadius:0,fill:false}},
-    ]}},options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleR}}}}
+    ]}},options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:mkX(),y:mkR()}}}}
   }});
   finChart=new Chart(document.getElementById('finChart'),{{type:'bar',
     data:{{labels:d.fin_labels,datasets:[
       {{label:'Receita',data:d.fin_rev,backgroundColor:'#10b98133',borderColor:'#10b981',borderWidth:2,borderRadius:3}},
       {{label:'Despesa',data:d.fin_exp,backgroundColor:'#ef444433',borderColor:'#ef4444',borderWidth:2,borderRadius:3}},
       {{label:'Resultado',data:d.fin_profit,type:'line',borderColor:'#6366f1',backgroundColor:'#6366f122',fill:true,tension:.4,yAxisID:'y'}},
-    ]}},options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleR}}}}
+    ]}},options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:mkX(),y:mkR()}}}}
   }});
   marginChart=new Chart(document.getElementById('marginChart'),{{type:'line',
     data:{{labels:d.fin_labels,datasets:[
       {{label:'Margem %',data:d.fin_margin,borderColor:'#f59e0b',backgroundColor:'#f59e0b22',fill:true,tension:.4,pointRadius:4}},
-    ]}},options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleP}}}}
+    ]}},options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:leg}},scales:{{x:mkX(),y:mkP()}}}}
   }});
   catChart=new Chart(document.getElementById('catChart'),{{type:'bar',
     data:{{labels:d.cat_labels,datasets:[{{label:'R$',data:d.cat_vals,
@@ -894,11 +894,11 @@ function initCharts(){{
   }});
   espChart=new Chart(document.getElementById('espChart'),{{type:'line',
     data:{{labels:d.esp_month_labels,datasets:d.esp_datasets}},
-    options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleR}}}}
+    options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:mkX(),y:mkR()}}}}
   }});
   apptChart=new Chart(document.getElementById('apptChart'),{{type:'bar',
     data:{{labels:d.appt_prof.map(x=>x.name),datasets:[{{label:'Agendamentos',data:d.appt_prof.map(x=>x.cnt),backgroundColor:'#8b5cf655',borderColor:'#8b5cf6',borderWidth:2,borderRadius:3}}]}},
-    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',interaction:{{mode:'index',intersect:false}},plugins:{{legend:{{display:false}}}},scales:{{x:scaleN,y:{{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}}}}}}
+    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',interaction:{{mode:'index',intersect:false}},plugins:{{legend:{{display:false}}}},scales:{{x:mkN(),y:{{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}}}}}}
   }});
   catApptChart=new Chart(document.getElementById('catApptChart'),{{type:'doughnut',
     data:{{labels:d.appt_cat.map(x=>x.name),datasets:[{{data:d.appt_cat.map(x=>x.cnt),
@@ -914,21 +914,21 @@ function initCharts(){{
     data:{{labels:d.goal_labels,datasets:[
       {{label:'Meta',data:d.goal_targets,backgroundColor:'#3b82f622',borderColor:'#3b82f6',borderWidth:2,borderRadius:3}},
       {{label:'Realizado',data:d.goal_actual,backgroundColor:'#10b98155',borderColor:'#10b981',borderWidth:2,borderRadius:3}},
-    ]}},options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleR}}}}
+    ]}},options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:leg}},scales:{{x:mkX(),y:mkR()}}}}
   }});
   howMetChart=new Chart(document.getElementById('howMetChart'),{{type:'bar',
     data:{{labels:d.how_met.map(x=>x.name),datasets:[{{label:'Pacientes',data:d.how_met.map(x=>x.cnt),
       backgroundColor:COLORS.slice(0,d.how_met.length).map(c=>c+'55'),
       borderColor:COLORS.slice(0,d.how_met.length),borderWidth:2,borderRadius:3}}]}},
-    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{{legend:{{display:false}}}},scales:{{x:scaleN,y:{{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}}}}}}
+    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{{legend:{{display:false}}}},scales:{{x:mkN(),y:{{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}}}}}}
   }});
   apptMonthChart=new Chart(document.getElementById('apptMonthChart'),{{type:'bar',
     data:{{labels:d.appt_month_labels,datasets:[{{label:'Agendamentos',data:d.appt_month_vals,backgroundColor:'#06b6d455',borderColor:'#06b6d4',borderWidth:2,borderRadius:3}}]}},
-    options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:{{display:false}}}},scales:{{x:scaleX,y:scaleN}}}}
+    options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:{{display:false}}}},scales:{{x:mkX(),y:mkN()}}}}
   }});
   missChart=new Chart(document.getElementById('missChart'),{{type:'bar',
     data:{{labels:d.miss_labels,datasets:[{{label:'Faltas',data:d.miss_vals,backgroundColor:'#f59e0b55',borderColor:'#f59e0b',borderWidth:2,borderRadius:3}}]}},
-    options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:{{display:false}}}},scales:{{x:scaleX,y:scaleN}}}}
+    options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:{{display:false}}}},scales:{{x:mkX(),y:mkN()}}}}
   }});
   howMetChart2=new Chart(document.getElementById('howMetChart2'),{{type:'doughnut',
     data:{{labels:d.how_met.map(x=>x.name),datasets:[{{data:d.how_met.map(x=>x.cnt),
@@ -1263,7 +1263,7 @@ function initDailyCharts(){{
     }}]}},
     options:{{responsive:true,maintainAspectRatio:true,
       plugins:{{legend:leg,tooltip:{{callbacks:{{label:ctx=>ctx.parsed.y+' agend.'}}}}}},
-      scales:{{x:scaleX,y:{{...scaleN,beginAtZero:true}}}}
+      scales:{{x:mkX(),y:{{...mkN(),beginAtZero:true}}}}
     }}
   }});
   const dentColors=COLORS.slice(0,d.dent_names.length);
@@ -1277,7 +1277,7 @@ function initDailyCharts(){{
     options:{{responsive:true,maintainAspectRatio:true,
       interaction:{{mode:'index',intersect:false}},
       plugins:{{legend:leg}},
-      scales:{{x:scaleX,y:{{...scaleN,beginAtZero:true}}}}
+      scales:{{x:mkX(),y:{{...mkN(),beginAtZero:true}}}}
     }}
   }});
   chairChart=new Chart(document.getElementById('chairChart'),{{
@@ -1289,7 +1289,7 @@ function initDailyCharts(){{
     options:{{responsive:true,maintainAspectRatio:true,
       interaction:{{mode:'index',intersect:false}},
       plugins:{{legend:leg,tooltip:{{callbacks:{{label:ctx=>ctx.parsed.y+'%'}}}}}},
-      scales:{{x:scaleX,y:{{
+      scales:{{x:mkX(),y:{{
         ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},
         grid:{{color:G2}},beginAtZero:true,suggestedMax:100
       }}}}
