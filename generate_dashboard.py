@@ -861,6 +861,17 @@ const mkX=()=>({{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}})
 const leg={{labels:{{color:C,boxWidth:11,font:{{size:10}}}}}};
 const legR={{position:'right',labels:{{color:C,boxWidth:10,font:{{size:10}}}}}};
 
+function fitY(c){{
+  const vals=c.data.datasets.flatMap(d=>(d.data||[]).filter(v=>v!=null&&!isNaN(v)));
+  if(!vals.length)return;
+  const lo=Math.min(...vals),hi=Math.max(...vals);
+  const rng=hi-lo||Math.abs(hi)||1;
+  const pad=rng*0.12;
+  const mag=Math.pow(10,Math.floor(Math.log10(rng)));
+  c.options.scales.y.min=Math.floor((lo-pad)/mag)*mag;
+  c.options.scales.y.max=Math.ceil((hi+pad)/mag)*mag;
+  c.update('none');
+}}
 function initCharts(){{
   const d=PERIODS.mat;
   trendChart=new Chart(document.getElementById('trendChart'),{{type:'line',
@@ -884,6 +895,7 @@ function initCharts(){{
       {{label:'Margem %',data:d.fin_margin,borderColor:'#f59e0b',backgroundColor:'#f59e0b22',fill:true,tension:.4,pointRadius:4}},
     ]}},options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:leg}},scales:{{x:mkX(),y:mkP()}}}}
   }});
+  fitY(finChart);fitY(marginChart);
   catChart=new Chart(document.getElementById('catChart'),{{type:'bar',
     data:{{labels:d.cat_labels,datasets:[{{label:'R$',data:d.cat_vals,
       backgroundColor:COLORS.slice(0,d.cat_labels.length).map(c=>c+'99'),
@@ -1075,11 +1087,11 @@ function updateCharts(d){{
   finChart.data.datasets[0].data=d.fin_rev;
   finChart.data.datasets[1].data=d.fin_exp;
   finChart.data.datasets[2].data=d.fin_profit;
-  finChart.update();
+  finChart.update();fitY(finChart);
   // Margin
   marginChart.data.labels=d.fin_labels;
   marginChart.data.datasets[0].data=d.fin_margin;
-  marginChart.update();
+  marginChart.update();fitY(marginChart);
   // Categories
   catChart.data.labels=d.cat_labels;
   catChart.data.datasets[0].data=d.cat_vals;
