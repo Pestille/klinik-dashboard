@@ -25,6 +25,7 @@ TO_STR  = TO_DATE.strftime("%Y-%m-%d")
 
 FIXED_CATS = {"Aluguel","Funcionários","Software","CRO","Seguro","Contabilidade",
               "Internet","Telefone","Empréstimo","Cadastro de Fornecedores"}
+META_MENSAL = 100_000      # Meta mensal de receita
 
 COLORS = ["#6366f1","#10b981","#f59e0b","#ef4444","#8b5cf6",
           "#14b8a6","#f97316","#ec4899","#06b6d4","#84cc16","#3b82f6","#a855f7"]
@@ -679,6 +680,7 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
     <div class="kpi blue"><label>Receita Média/Mês</label><div class="val" id="f-avg-rev">—</div></div>
     <div class="kpi amber"><label>Despesa Média/Mês</label><div class="val" id="f-avg-exp">—</div></div>
     <div class="kpi cyan"><label>Break-even Mensal</label><div class="val" id="f-be">—</div></div>
+    <div class="kpi" id="meta-card"><label>Meta R$ 100k</label><div class="val" id="f-meta-pct">—</div><div class="sub">da meta atingida</div></div>
   </div>
   <div class="stitle">Demonstrativo de Resultado</div>
   <div class="g2">
@@ -818,6 +820,7 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
 const PERIODS = {J(PERIODS)};
 const DAILY   = {J(DAILY)};
 const COLORS  = {J(COLORS)};
+const META    = {J(META_MENSAL)};
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function sw(n){{
@@ -866,6 +869,7 @@ function initCharts(){{
       {{label:'Despesa',data:d.all_exp_hist,borderColor:'#ef4444',backgroundColor:'#ef444422',fill:false,tension:.4,pointRadius:3,spanGaps:false}},
       {{label:'Proj. Receita',data:d.proj_rev_line,borderColor:'#10b981',borderDash:[7,3],backgroundColor:'transparent',tension:.4,pointRadius:5,pointStyle:'triangle',spanGaps:false}},
       {{label:'Proj. Despesa',data:d.proj_exp_line,borderColor:'#ef4444',borderDash:[7,3],backgroundColor:'transparent',tension:.4,pointRadius:5,pointStyle:'triangle',spanGaps:false}},
+      {{label:'Meta R$100k',data:d.proj_labels.map(()=>META),borderColor:'#f59e0b',borderDash:[5,5],backgroundColor:'transparent',tension:0,pointRadius:0,fill:false}},
     ]}},options:{{responsive:true,maintainAspectRatio:true,interaction:{{mode:'index',intersect:false}},plugins:{{legend:leg}},scales:{{x:scaleX,y:scaleR}}}}
   }});
   finChart=new Chart(document.getElementById('finChart'),{{type:'bar',
@@ -1064,6 +1068,7 @@ function updateCharts(d){{
   trendChart.data.datasets[1].data=d.all_exp_hist;
   trendChart.data.datasets[2].data=d.proj_rev_line;
   trendChart.data.datasets[3].data=d.proj_exp_line;
+  trendChart.data.datasets[4].data=d.proj_labels.map(()=>META);
   trendChart.update();
   // Financial P&L
   finChart.data.labels=d.fin_labels;
@@ -1181,6 +1186,10 @@ function renderPeriod(p){{
   txt('f-avg-rev',fmtk(d.avg_monthly_rev));
   txt('f-avg-exp',fmtk(d.avg_monthly_exp));
   txt('f-be',fmtk(d.breakeven));
+  const metaPct=Math.round(d.avg_monthly_rev/META*100);
+  txt('f-meta-pct',metaPct+'%');
+  const mc=document.getElementById('meta-card');
+  if(mc) mc.className='kpi '+(d.avg_monthly_rev>=META?'green':'red');
 
   // ── Clínico KPIs ──
   txt('c-prod',fmt(d.total_amount));
