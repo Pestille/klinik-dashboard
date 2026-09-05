@@ -86,6 +86,7 @@ def compute_period(label, from_str, to_str):
     goals_raw      = api("/operational/list_sales_goals", from_str, to_str) or []
     misses_raw     = api("/operational/list_misses_goals", from_str, to_str) or []
     appts_raw      = api("/appointment/list", from_str, to_str) or []
+    prod_prof_raw  = api("/sales/professional_revenue", from_str, to_str) or []
 
     # ── Financial ──────────────────────────────────────────────────────────────
     values = summary_raw if isinstance(summary_raw, list) else \
@@ -262,6 +263,26 @@ def compute_period(label, from_str, to_str):
 
     appt_prof_items  = sorted(appt_by_prof.items(),  key=lambda x:-x[1])[:10]
     appt_cat_items   = sorted(appt_by_cat.items(),   key=lambda x:-x[1])[:8]
+    # ── Per-dentist productivity table ─────────────────────────────────────────
+    dent_rev_map = {}
+    if isinstance(prod_prof_raw, list) and prod_prof_raw:
+        for _row in prod_prof_raw:
+            _pid  = str(_row.get("PersonId") or _row.get("ProfessionalId") or "")
+            _name = prof_map.get(_pid, "")
+            if _name:
+                dent_rev_map[_name] = float(_row.get("Revenue", _row.get("TotalRevenue", 0)) or 0)
+    # Fallback: distribute total_amount proportionally by appointment count
+    if not dent_rev_map and appt_by_prof:
+        _tot_a = sum(appt_by_prof.values()) or 1
+        for _nm, _cnt in appt_by_prof.items():
+            dent_rev_map[_nm] = round(total_amount * _cnt / _tot_a, 2)
+    dent_table = []
+    for _nm, _cnt in sorted(appt_by_prof.items(), key=lambda x: -x[1]):
+        _rev    = round(dent_rev_map.get(_nm, 0), 2)
+        _ticket = round(_rev / _cnt, 2) if _cnt > 0 else 0
+        _ch     = _dentist_chair(_nm)
+        dent_table.append({"name": _nm, "chair": _ch, "appts": _cnt,
+                           "rev": _rev, "ticket": _ticket, "conv": conv_rate})
     how_met_items    = sorted(how_met_d.items(),      key=lambda x:-x[1])[:8]
     appt_month_items = sorted(appt_by_month.items())
     total_appts      = len(appt_list)
@@ -365,6 +386,7 @@ def compute_period(label, from_str, to_str):
         "appt_cat":  [{"name": nm,"cnt": c} for nm,c in appt_cat_items],
         "how_met":   [{"name": nm,"cnt": c} for nm,c in how_met_items],
         "n_profs": len(appt_by_prof),
+        "dent_table": dent_table,
         "funnel_w": min(100,conv_rate) if total_est>0 else 50,
     }
 
@@ -491,6 +513,7 @@ DAILY = {
     ],
     "n_appts_mo":   sum(daily_sched.values()),
 }
+
 gerado_em = datetime.now().strftime("%d/%m/%Y %H:%M")
 
 # ─── HTML ─────────────────────────────────────────────────────────────────────
@@ -780,9 +803,32 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
   </div>
 </div>
 
-<!-- TAB 5 — PRODUTIVIDADE DIÁRIA -->
+<!-- TAB 5 — PRODUTIVIDADE -->
 <div class="panel" id="p5">
-  <div class="stitle">Produtividade Diária — {TODAY.strftime("%B/%Y").capitalize()}</div>
+  <div class="stitle">Produtividade por Dentista</div>
+
+  <!-- Tabela periódica (responde ao seletor MAT/MQT/YTD) -->
+  <div class="card" style="margin-bottom:18px">
+    <h3 style="margin-bottom:12px">Produção por Dentista <span id="pd-period-label" style="font-size:.72rem;color:var(--text3);font-weight:400"></span></h3>
+    <table class="dtable">
+      <thead>
+        <tr>
+          <th>Dentista</th>
+          <th style="text-align:center">Cadeira</th>
+          <th class="num">Atend.</th>
+          <th class="num">Receita</th>
+          <th class="num">Ticket Méd.</th>
+          <th class="num">Conversão</th>
+        </tr>
+      </thead>
+      <tbody id="dent-period-rows"></tbody>
+      <tfoot id="dent-period-foot"></tfoot>
+    </table>
+    <div style="font-size:.68rem;color:var(--text3);margin-top:8px">* Receita distribuída proporcionalmente por atendimento quando endpoint /sales/professional_revenue não retornar dados.</div>
+  </div>
+
+  <!-- Detalhe diário — mês atual -->
+  <div class="stitle" style="font-size:.78rem;color:var(--text3);margin:4px 0 10px">Detalhe Diário — {TODAY.strftime("%B/%Y").capitalize()}</div>
   <div class="kpi-grid">
     <div class="kpi cyan"><label>Méd. Agend./Dia</label><div class="val" id="pd-sched">—</div></div>
     <div class="kpi green"><label>Méd. Atend./Dia</label><div class="val" id="pd-done">—</div></div>
@@ -801,13 +847,13 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
       <canvas id="chairChart"></canvas>
     </div>
     <div class="card">
-      <h3>Resumo por Dentista — Mês Atual</h3>
+      <h3>Resumo Diário por Dentista</h3>
       <table class="dtable">
-        <thead><tr><th>Dentista</th><th class="num">Agend.</th><th class="num">Méd./Dia</th><th>Cadeira</th></tr></thead>
+        <thead><tr><th>Dentista</th><th class="num">Agend.</th><th class="num">Méd./Dia</th><th style="text-align:center">Cadeira</th></tr></thead>
         <tbody id="dent-day-rows"></tbody>
       </table>
       <div style="margin-top:14px;font-size:.75rem;color:var(--text3)">
-        Receita diária estimada (base MQT ÷ dias úteis do mês):<br>
+        Receita diária estimada (MQT ÷ dias úteis):<br>
         <strong id="pd-rev2" style="color:var(--green);font-size:.95rem">—</strong>
       </div>
     </div>
@@ -860,7 +906,6 @@ const mkP=()=>({{ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},gr
 const mkX=()=>({{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}});
 const leg={{labels:{{color:C,boxWidth:11,font:{{size:10}}}}}};
 const legR={{position:'right',labels:{{color:C,boxWidth:10,font:{{size:10}}}}}};
-
 function fitY(c){{
   const vals=c.data.datasets.flatMap(d=>(d.data||[]).filter(v=>v!=null&&!isNaN(v)));
   if(!vals.length)return;
@@ -872,6 +917,7 @@ function fitY(c){{
   c.options.scales.y.max=Math.ceil((hi+pad)/mag)*mag;
   c.update('none');
 }}
+
 function initCharts(){{
   const d=PERIODS.mat;
   trendChart=new Chart(document.getElementById('trendChart'),{{type:'line',
@@ -900,7 +946,7 @@ function initCharts(){{
     data:{{labels:d.cat_labels,datasets:[{{label:'R$',data:d.cat_vals,
       backgroundColor:COLORS.slice(0,d.cat_labels.length).map(c=>c+'99'),
       borderColor:COLORS.slice(0,d.cat_labels.length),borderWidth:2}}]}},
-    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',interaction:{{mode:'index',intersect:false}},plugins:{{legend:{{display:false}}}},
+    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{{legend:{{display:false}}}},
       scales:{{x:{{ticks:{{color:'#64748b',callback:v=>'R$'+v.toLocaleString('pt-BR')}},grid:{{color:G2}}}},y:{{ticks:{{color:'#94a3b8',font:{{size:10}}}},grid:{{color:G1}}}}}}
     }}
   }});
@@ -910,7 +956,7 @@ function initCharts(){{
   }});
   apptChart=new Chart(document.getElementById('apptChart'),{{type:'bar',
     data:{{labels:d.appt_prof.map(x=>x.name),datasets:[{{label:'Agendamentos',data:d.appt_prof.map(x=>x.cnt),backgroundColor:'#8b5cf655',borderColor:'#8b5cf6',borderWidth:2,borderRadius:3}}]}},
-    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',interaction:{{mode:'index',intersect:false}},plugins:{{legend:{{display:false}}}},scales:{{x:mkN(),y:{{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}}}}}}
+    options:{{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{{legend:{{display:false}}}},scales:{{x:mkN(),y:{{ticks:{{color:'#64748b',font:{{size:10}}}},grid:{{color:G1}}}}}}}}
   }});
   catApptChart=new Chart(document.getElementById('catApptChart'),{{type:'doughnut',
     data:{{labels:d.appt_cat.map(x=>x.name),datasets:[{{data:d.appt_cat.map(x=>x.cnt),
@@ -1232,6 +1278,9 @@ function renderPeriod(p){{
   html('esp-rows',buildEspRows(d));
   html('goal-rows',buildGoalRows(d));
   html('appt-rows',buildApptRows(d));
+  html('dent-period-rows',buildDentPeriodRows(d));
+  html('dent-period-foot',buildDentPeriodFoot(d));
+  txt('pd-period-label','('+d.from+' → '+d.to+')');
 
   // ── Charts ──
   updateCharts(d);
@@ -1245,6 +1294,41 @@ function switchPeriod(p){{
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 // ── Produtividade Diária — estático (sempre mês atual) ────────────────────────
+function buildDentPeriodRows(d){{
+  if(!d.dent_table||!d.dent_table.length) return '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Sem dados para o período</td></tr>';
+  const totalRev=d.dent_table.reduce((s,r)=>s+r.rev,0)||1;
+  return d.dent_table.map(r=>{{
+    const pct=Math.round(r.rev/totalRev*100);
+    const chLabel=r.chair===1?'<span style="color:#60a5fa">C-1</span>':'<span style="color:#a78bfa">C-2</span>';
+    return `<tr>
+      <td>${{r.name}}</td>
+      <td style="text-align:center">${{chLabel}}</td>
+      <td class="num">${{r.appts.toLocaleString('pt-BR')}}</td>
+      <td class="num">
+        ${{fmt(r.rev)}}
+        <div style="height:3px;background:var(--border);border-radius:2px;margin-top:3px">
+          <div style="height:3px;width:${{pct}}%;background:#10b981;border-radius:2px"></div>
+        </div>
+      </td>
+      <td class="num">${{fmt(r.ticket)}}</td>
+      <td class="num">${{r.conv}}%</td>
+    </tr>`;
+  }}).join('');
+}}
+function buildDentPeriodFoot(d){{
+  if(!d.dent_table||!d.dent_table.length) return '';
+  const totAppts=d.dent_table.reduce((s,r)=>s+r.appts,0);
+  const totRev=d.dent_table.reduce((s,r)=>s+r.rev,0);
+  const totTicket=totAppts>0?totRev/totAppts:0;
+  return `<tr style="font-weight:600;border-top:2px solid var(--border)">
+    <td>Total</td><td></td>
+    <td class="num">${{totAppts.toLocaleString('pt-BR')}}</td>
+    <td class="num">${{fmt(totRev)}}</td>
+    <td class="num">${{fmt(totTicket)}}</td>
+    <td class="num">${{d.conv_rate}}%</td>
+  </tr>`;
+}}
+
 function buildDentDayRows(d){{
   const c1set=new Set(['Maisa','Fernanda','João','Joao','Schussler','Nelson','Oshiro','Pangoni']);
   return d.dent_series.map(s=>{{
@@ -1266,6 +1350,7 @@ function initDailyCharts(){{
   txt('pd-c1',   d.avg_c1+'%');
   txt('pd-c2',   d.avg_c2+'%');
   html('dent-day-rows',buildDentDayRows(d));
+
   schedDayChart=new Chart(document.getElementById('schedDayChart'),{{
     type:'line',
     data:{{labels:lbls,datasets:[{{
@@ -1278,6 +1363,7 @@ function initDailyCharts(){{
       scales:{{x:mkX(),y:{{...mkN(),beginAtZero:true}}}}
     }}
   }});
+
   const dentColors=COLORS.slice(0,d.dent_names.length);
   dentDayChart=new Chart(document.getElementById('dentDayChart'),{{
     type:'line',
@@ -1292,18 +1378,22 @@ function initDailyCharts(){{
       scales:{{x:mkX(),y:{{...mkN(),beginAtZero:true}}}}
     }}
   }});
+
   chairChart=new Chart(document.getElementById('chairChart'),{{
     type:'line',
     data:{{labels:lbls,datasets:[
-      {{label:'Cadeira 1',data:d.chair1_util,borderColor:'#3b82f6',backgroundColor:'#3b82f622',fill:true,tension:.35,pointRadius:4}},
-      {{label:'Cadeira 2',data:d.chair2_util,borderColor:'#8b5cf6',backgroundColor:'#8b5cf622',fill:true,tension:.35,pointRadius:4}},
+      {{label:'Cadeira 1',data:d.chair1_util,
+        borderColor:'#3b82f6',backgroundColor:'#3b82f622',fill:true,tension:.35,pointRadius:4}},
+      {{label:'Cadeira 2',data:d.chair2_util,
+        borderColor:'#8b5cf6',backgroundColor:'#8b5cf622',fill:true,tension:.35,pointRadius:4}},
     ]}},
     options:{{responsive:true,maintainAspectRatio:true,
       interaction:{{mode:'index',intersect:false}},
       plugins:{{legend:leg,tooltip:{{callbacks:{{label:ctx=>ctx.parsed.y+'%'}}}}}},
       scales:{{x:mkX(),y:{{
         ticks:{{color:'#64748b',font:{{size:10}},callback:v=>v+'%'}},
-        grid:{{color:G2}},beginAtZero:true,suggestedMax:100
+        grid:{{color:G2}},beginAtZero:true,
+        suggestedMax:100
       }}}}
     }}
   }});
