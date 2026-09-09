@@ -415,6 +415,15 @@ mqt_from = date(_y3, _m3, 1)     # e.g. 2026-06-01  (3 complete months to 2026-0
 
 ytd_from = TODAY.replace(month=1, day=1)
 
+CHAIR1_KW   = {"maisa","fernanda","pangoni","joão","joao","schussler","nelson","oshiro"}
+CHAIR2_KW   = {"adrieli","araujo","barbara","casari","caroline","carol","preus"}
+
+def _dentist_chair(full_name):
+    n = full_name.lower()
+    if any(k in n for k in CHAIR1_KW): return 1
+    if any(k in n for k in CHAIR2_KW): return 2
+    return 0
+
 print("Calculando MAT (12 meses)...")
 mat_data = compute_period("MAT", mat_from.strftime("%Y-%m-%d"), TO_STR)
 print("Calculando MQT (3 meses)...")
@@ -427,14 +436,6 @@ PERIODS = {"mat": mat_data, "mqt": mqt_data, "ytd": ytd_data}
 # ─── DAILY PRODUCTIVITY — mês atual ─────────────────────────────────────────
 CHAIR_MIN   = 600        # 10 h × 60 min disponíveis por cadeira/dia
 DEFAULT_DUR = 60         # minutos assumidos por agendamento quando a API não retorna duração
-CHAIR1_KW   = {"maisa","fernanda","pangoni","joão","joao","schussler","nelson","oshiro"}
-CHAIR2_KW   = {"adrieli","araujo","barbara","casari","caroline","carol","preus"}
-
-def _dentist_chair(full_name):
-    n = full_name.lower()
-    if any(k in n for k in CHAIR1_KW): return 1
-    if any(k in n for k in CHAIR2_KW): return 2
-    return 0
 
 def _biz_days(year, month, up_to=None):
     _, last = _cal.monthrange(year, month)
