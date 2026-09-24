@@ -1,19 +1,10 @@
 {
-  "generated_at": "2026-09-23",
+  "generated_at": "2026-09-24",
   "periods": [
     "Jun/2026",
     "Jul/2026"
   ],
   "dentist_payments": [
-    {
-      "month": "Jun/2026",
-      "description": "Pagamento de Conta: DR NELSON OSHIRO",
-      "amount": 700.0,
-      "type": "CREDIT",
-      "entry_type": "ACCOUNTS_PAYMENT",
-      "date": "2026-06-10T14:34:03.000Z",
-      "category": "COMISSÃO"
-    },
     {
       "month": "Jun/2026",
       "description": "Pagamento de Conta: DR JOÃO SCHUSSLER",
@@ -30,6 +21,15 @@
       "type": "CREDIT",
       "entry_type": "ACCOUNTS_PAYMENT",
       "date": "2026-06-10T14:32:24.000Z",
+      "category": "COMISSÃO"
+    },
+    {
+      "month": "Jun/2026",
+      "description": "Pagamento de Conta: DR NELSON OSHIRO",
+      "amount": 700.0,
+      "type": "CREDIT",
+      "entry_type": "ACCOUNTS_PAYMENT",
+      "date": "2026-06-10T14:34:03.000Z",
       "category": "COMISSÃO"
     },
     {
