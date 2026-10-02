@@ -246,6 +246,15 @@ def compute_period(label, from_str, to_str):
 
     # ── Appointments ───────────────────────────────────────────────────────────
     appt_list     = appts_raw if isinstance(appts_raw, list) else []
+    # Debug: mostrar chaves e amostra do 1º agendamento
+    if appt_list:
+        _sample = appt_list[0]
+        print(f"  [DEBUG appt keys] {list(_sample.keys())}")
+        _val_fields = ["Value","Amount","TotalValue","ServiceValue","Price",
+                       "ProcedureValue","ValuePaid","FinalValue"]
+        for _f in _val_fields:
+            if _f in _sample:
+                print(f"    -> {_f} = {_sample[_f]}")
     appt_by_prof  = defaultdict(int)
     dent_rev_appt = defaultdict(float)   # soma dos valores de procedimentos por dentista
     appt_by_cat   = defaultdict(int)
