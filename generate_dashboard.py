@@ -247,6 +247,7 @@ def compute_period(label, from_str, to_str):
     # ── Appointments ───────────────────────────────────────────────────────────
     appt_list     = appts_raw if isinstance(appts_raw, list) else []
     appt_by_prof  = defaultdict(int)
+    dent_rev_appt = defaultdict(float)   # soma dos valores de procedimentos por dentista
     appt_by_cat   = defaultdict(int)
     how_met_d     = defaultdict(int)
     appt_by_month = defaultdict(int)
@@ -254,6 +255,11 @@ def compute_period(label, from_str, to_str):
         pid  = str(a.get("Dentist_PersonId",""))
         name = prof_map.get(pid, f"Dr(a). {pid[:6]}" if pid else "Não informado")
         appt_by_prof[name] += 1
+        # Soma o valor do procedimento executado pelo dentista
+        val = float(a.get("Value") or a.get("Amount") or a.get("TotalValue") or
+                    a.get("ServiceValue") or a.get("Price") or a.get("ProcedureValue") or
+                    a.get("ValuePaid") or a.get("FinalValue") or 0)
+        dent_rev_appt[name] += val
         cat = a.get("CategoryDescription","Sem categoria") or "Sem categoria"
         appt_by_cat[cat] += 1
         src = a.get("HowDidMeet","") or "Não informado"
@@ -264,14 +270,24 @@ def compute_period(label, from_str, to_str):
     appt_prof_items  = sorted(appt_by_prof.items(),  key=lambda x:-x[1])[:10]
     appt_cat_items   = sorted(appt_by_cat.items(),   key=lambda x:-x[1])[:8]
     # ── Per-dentist productivity table ─────────────────────────────────────────
-    dent_rev_map = {}
-    if isinstance(prod_prof_raw, list) and prod_prof_raw:
+    # Receita = soma dos valores dos procedimentos executados por cada dentista
+    # Ticket médio = receita / número de atendimentos
+    _appt_rev_total = sum(dent_rev_appt.values())
+
+    # Prioridade 1: valores de procedimentos direto dos agendamentos
+    if _appt_rev_total > 0:
+        dent_rev_map = dict(dent_rev_appt)
+    # Prioridade 2: /sales/professional_revenue
+    elif isinstance(prod_prof_raw, list) and prod_prof_raw:
+        dent_rev_map = {}
         for _row in prod_prof_raw:
             _pid  = str(_row.get("PersonId") or _row.get("ProfessionalId") or "")
             _name = prof_map.get(_pid, "")
             if _name:
                 dent_rev_map[_name] = float(_row.get("Revenue", _row.get("TotalRevenue", 0)) or 0)
-    # Fallback: distribute total_amount proportionally by appointment count
+    else:
+        dent_rev_map = {}
+    # Prioridade 3: distribuir total_amount proporcionalmente (último recurso)
     if not dent_rev_map and appt_by_prof:
         _tot_a = sum(appt_by_prof.values()) or 1
         for _nm, _cnt in appt_by_prof.items():
@@ -825,7 +841,7 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
       <tbody id="dent-period-rows"></tbody>
       <tfoot id="dent-period-foot"></tfoot>
     </table>
-    <div style="font-size:.68rem;color:var(--text3);margin-top:8px">* Receita distribuída proporcionalmente por atendimento quando endpoint /sales/professional_revenue não retornar dados.</div>
+    <div style="font-size:.68rem;color:var(--text3);margin-top:8px">* Receita = soma dos valores dos procedimentos executados por cada dentista. Ticket médio = Receita ÷ Atendimentos.</div>
   </div>
 
   <!-- Detalhe diário — mês atual -->
