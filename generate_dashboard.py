@@ -15,6 +15,8 @@ COLORS  = ["#6366f1","#10b981","#f59e0b","#ef4444","#8b5cf6",
 META_MENSAL = 100_000
 TODAY_MONTH = "October/2026"
 
+RFV_DATA = json.loads('{"total_patients": 1871, "seg_labels": ["Campe\\u00f5es", "Leais", "Potenciais", "Novos / Promissores", "Em Risco", "Inativos"], "seg_counts": [247, 349, 241, 286, 378, 370], "seg_vals": [2041151.11, 1335185.47, 108887.0, 108590.1, 1085266.29, 221769.17], "seg_rec": [66, 183, 249, 77, 687, 754], "seg_freq": [25.4, 12.6, 4.0, 2.2, 11.7, 2.9], "champions": 247, "loyal": 349, "at_risk": 378, "inactive": 370, "new_promise": 286, "potential": 241, "top20": [{"name": "Rodrigo Flores Da Silva Aquino", "rec": 13, "freq": 29, "val": 5707.48, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Emanuely Cristine De Andrade Moraes Araujo", "rec": 27, "freq": 24, "val": 3433.82, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Marcio Valerio Figueiredo Farias", "rec": 35, "freq": 27, "val": 9299.79, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Geovanna Nathyele Rodrigues Duarte Cristaldo", "rec": 19, "freq": 24, "val": 5193.22, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Isabelly Alves Monteiro", "rec": 58, "freq": 29, "val": 10902.96, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Valdevino Augusto Da Silva", "rec": 19, "freq": 16, "val": 39534.49, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Arthur Jose Dias Dos Santos", "rec": 21, "freq": 19, "val": 16351.43, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Sulimayra Da Silva Santana", "rec": 13, "freq": 35, "val": 9089.28, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Leonardo Vaz De Lima Gomes", "rec": 9, "freq": 27, "val": 5657.56, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Patricia Rejane Figueiredo Faria", "rec": 30, "freq": 76, "val": 24109.16, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Marcus Vinicius Jonas De Barros", "rec": 30, "freq": 16, "val": 3281.22, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Dicla Santos Gueiros", "rec": 14, "freq": 20, "val": 8142.95, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Clarindo Melo De Sa", "rec": 27, "freq": 47, "val": 7767.0, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Cleomar De Morais Goncalves", "rec": 57, "freq": 30, "val": 10844.33, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Paulo Milkem Abdala", "rec": 16, "freq": 58, "val": 45086.67, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Silvia Moura Silva Brizido", "rec": 57, "freq": 57, "val": 17818.16, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Nickolas Miguel Caninde Hall", "rec": 26, "freq": 34, "val": 11545.0, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Luiza Helena Haddad Coutinho", "rec": 14, "freq": 42, "val": 9392.46, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Katyele Gon\\u00e7alves Silva", "rec": 62, "freq": 24, "val": 5677.63, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}, {"name": "Marcia Dos Santos Fonseca Fantin", "rec": 12, "freq": 66, "val": 10798.29, "R": 5, "F": 5, "V": 5, "rfv": 15, "seg": "Campe\\u00f5es"}]}')
+
 gerado_em = "15/10/2026 14:42"
 
 def J(x):
@@ -130,6 +132,7 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
     <div class="tab"         onclick="sw(3)">📊 Comercial</div>
     <div class="tab"         onclick="sw(4)">📅 Operacional</div>
     <div class="tab"         onclick="sw(5)">📈 Produtividade</div>
+    <div class="tab"         onclick="sw(6)">🎯 RFV</div>
   </div>
   <div class="period-btns">
     <button class="pbtn active" data-p="mat" onclick="switchPeriod('mat')">MAT</button>
@@ -364,13 +367,46 @@ footer{{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top
   </div>
 </div>
 
+<!-- TAB 6 — RFV -->
+<div class="panel" id="p6">
+  <div class="stitle">Análise RFV — Recência · Frequência · Valor</div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><label>Total de Pacientes</label><div class="val" id="rfv-total">—</div><div class="sub">com histórico de pagamento</div></div>
+    <div class="kpi amber"><label>🏆 Campeões</label><div class="val" id="rfv-champ">—</div><div class="sub">alta recência, freq. e valor</div></div>
+    <div class="kpi green"><label>❤ Leais</label><div class="val" id="rfv-loyal">—</div><div class="sub">relacionamento consolidado</div></div>
+    <div class="kpi cyan"><label>🌱 Novos/Promissores</label><div class="val" id="rfv-new">—</div><div class="sub">recentes, baixa freq. ainda</div></div>
+    <div class="kpi red"><label>⚠ Em Risco</label><div class="val" id="rfv-risk">—</div><div class="sub">freq. alta mas sumiram</div></div>
+    <div class="kpi purple"><label>💤 Inativos</label><div class="val" id="rfv-inactive">—</div><div class="sub">última visita há +1 ano</div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><h3>Pacientes por Segmento</h3><canvas id="rfvSegChart" style="max-height:280px"></canvas></div>
+    <div class="card"><h3>Receita por Segmento (R$)</h3><canvas id="rfvValChart" style="max-height:280px"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="card"><h3>Recência Média por Segmento (dias)</h3><canvas id="rfvRecChart" style="max-height:220px"></canvas></div>
+    <div class="card"><h3>Frequência Média por Segmento (consultas)</h3><canvas id="rfvFreqChart" style="max-height:220px"></canvas></div>
+  </div>
+  <div class="stitle">Top 20 Pacientes — Maior Score RFV</div>
+  <div class="card" style="overflow-x:auto">
+    <table class="dtable">
+      <thead><tr><th>#</th><th>Paciente</th><th class="num">Recência (dias)</th><th class="num">Frequência</th><th class="num">Valor Total</th><th class="num">R</th><th class="num">F</th><th class="num">V</th><th class="num">Score</th><th>Segmento</th></tr></thead>
+      <tbody id="rfv-top-rows"></tbody>
+    </table>
+  </div>
+  <div style="font-size:.67rem;color:var(--text3);margin-top:10px;padding:0 4px">
+    <strong>Como interpretar:</strong> R = Recência (5 = visitou recentemente) · F = Frequência (5 = mais visitas) · V = Valor (5 = maior gasto) · Score = R+F+V (máx 15).
+    Segmentação com base em todo o histórico de atendimentos desde Nov/2022.
+  </div>
+</div>
+
 <footer>Klinik Odontologia — Dashboard Executivo v2.1 — Dados via Clinicorp API — {gerado_em}</footer>
 
 <script>
-const PERIODS = {J(PERIODS)};
-const DAILY   = {J(DAILY)};
-const COLORS  = {J(COLORS)};
-const META    = {J(META_MENSAL)};
+const PERIODS  = {J(PERIODS)};
+const DAILY    = {J(DAILY)};
+const COLORS   = {J(COLORS)};
+const META     = {J(META_MENSAL)};
+const RFV_DATA = {J(RFV_DATA)};
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function sw(n){{
@@ -906,6 +942,84 @@ function initDailyCharts(){{
 initCharts();
 initDailyCharts();
 renderPeriod('mat');
+
+// ── RFV ───────────────────────────────────────────────────────────────────────
+let rfvSegChart,rfvValChart,rfvRecChart,rfvFreqChart;
+let rfvInited=false;
+
+const SEG_COLORS={{
+  'Campeões':'#f59e0b',
+  'Leais':'#10b981',
+  'Potenciais':'#06b6d4',
+  'Novos / Promissores':'#6366f1',
+  'Em Risco':'#ef4444',
+  'Inativos':'#64748b'
+}};
+
+function initRFV(){{
+  if(rfvInited)return;
+  rfvInited=true;
+  const d=RFV_DATA;
+  const colors=d.seg_labels.map(s=>SEG_COLORS[s]||'#94a3b8');
+
+  txt('rfv-total',d.total_patients.toLocaleString('pt-BR'));
+  txt('rfv-champ', d.champions);
+  txt('rfv-loyal', d.loyal);
+  txt('rfv-new',   d.new_promise);
+  txt('rfv-risk',  d.at_risk);
+  txt('rfv-inactive',d.inactive);
+
+  rfvSegChart=new Chart(document.getElementById('rfvSegChart'),{{
+    type:'doughnut',
+    data:{{labels:d.seg_labels,datasets:[{{data:d.seg_counts,backgroundColor:colors,borderWidth:1,borderColor:'#0a0f1e'}}]}},
+    options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:{{labels:{{color:'#94a3b8',boxWidth:12,font:{{size:11}}}}}},tooltip:{{callbacks:{{label:ctx=>ctx.label+': '+ctx.parsed+' pacientes'}}}}}}}}
+  }});
+
+  rfvValChart=new Chart(document.getElementById('rfvValChart'),{{
+    type:'bar',
+    data:{{labels:d.seg_labels,datasets:[{{label:'Receita Total',data:d.seg_vals,backgroundColor:colors,borderRadius:4}}]}},
+    options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:ctx=>'R$ '+ctx.parsed.y.toLocaleString('pt-BR',{{minimumFractionDigits:2}})}}}}}},scales:{{x:mkX(),y:mkR()}}}}
+  }});
+
+  rfvRecChart=new Chart(document.getElementById('rfvRecChart'),{{
+    type:'bar',
+    data:{{labels:d.seg_labels,datasets:[{{label:'Recência (dias)',data:d.seg_rec,backgroundColor:colors,borderRadius:4}}]}},
+    options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:ctx=>ctx.parsed.y+' dias'}}}}}},scales:{{x:mkX(),y:{{...mkN(),beginAtZero:true}}}}}}
+  }});
+
+  rfvFreqChart=new Chart(document.getElementById('rfvFreqChart'),{{
+    type:'bar',
+    data:{{labels:d.seg_labels,datasets:[{{label:'Freq. Média',data:d.seg_freq,backgroundColor:colors,borderRadius:4}}]}},
+    options:{{responsive:true,maintainAspectRatio:true,plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:ctx=>ctx.parsed.y+' consultas (média)'}}}}}},scales:{{x:mkX(),y:{{...mkN(),beginAtZero:true}}}}}}
+  }});
+
+  const segBadge={{
+    'Campeões':'<span class="badge" style="background:#f59e0b22;color:#fbbf24">Campeão</span>',
+    'Leais':'<span class="badge" style="background:#10b98122;color:#34d399">Leal</span>',
+    'Potenciais':'<span class="badge" style="background:#06b6d422;color:#22d3ee">Potencial</span>',
+    'Novos / Promissores':'<span class="badge" style="background:#6366f122;color:#818cf8">Novo</span>',
+    'Em Risco':'<span class="badge" style="background:#ef444422;color:#f87171">Em Risco</span>',
+    'Inativos':'<span class="badge" style="background:#33415522;color:#64748b">Inativo</span>'
+  }};
+
+  const rows=d.top20.map((p,i)=>`<tr>
+    <td style="color:var(--text3)">${{i+1}}</td>
+    <td>${{p.name}}</td>
+    <td class="num">${{p.rec}} dias</td>
+    <td class="num">${{p.freq}}</td>
+    <td class="num">${{fmt(p.val)}}</td>
+    <td class="num" style="color:#f59e0b;font-weight:700">${{p.R}}</td>
+    <td class="num" style="color:#10b981;font-weight:700">${{p.F}}</td>
+    <td class="num" style="color:#6366f1;font-weight:700">${{p.V}}</td>
+    <td class="num" style="color:#60a5fa;font-weight:700">${{p.rfv}}</td>
+    <td>${{segBadge[p.seg]||p.seg}}</td>
+  </tr>`).join('');
+  html('rfv-top-rows',rows);
+}}
+
+// Patch sw() para inicializar RFV ao abrir o tab
+const _origSw=sw;
+window.sw=function(n){{_origSw(n);if(n===6)initRFV();}};
 </script>
 </body>
 </html>"""
