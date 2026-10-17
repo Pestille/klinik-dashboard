@@ -4,21 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Klinik Odontologia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0f1e;--bg2:#111827;--bg3:#1e293b;--bg4:#0f172a;
-  --border:#1e3a5f;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
-  --blue:#3b82f6;--green:#10b981;--purple:#8b5cf6;--red:#ef4444;
-  --amber:#f59e0b;--cyan:#06b6d4;--pink:#ec4899;--indigo:#6366f1;
+  --bg:#07111d;--bg2:#0d1a2d;--bg3:#132136;--bg4:#0a1626;
+  --border:#1a3352;--text:#e8f0fa;--text2:#93aec8;--text3:#546e8a;
+  --blue:#2196f3;--green:#00c896;--purple:#8b5cf6;--red:#f0455a;
+  --amber:#f5a623;--cyan:#00bcd4;--pink:#ec4899;--indigo:#5c6bc0;
+  --teal:#00acc1;--brand:#0288d1;
 }
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
-header{background:linear-gradient(135deg,#0f1f3d 0%,#1a3a6e 60%,#0f2a5a 100%);
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+header{background:linear-gradient(135deg,#061527 0%,#0a2540 45%,#0d3060 100%);
   padding:14px 28px;display:flex;justify-content:space-between;align-items:center;
-  border-bottom:1px solid #1e3a8a44;box-shadow:0 4px 20px #00000055;
+  border-bottom:1px solid #0288d133;box-shadow:0 4px 24px #00000066;
   position:sticky;top:0;z-index:100}
-header h1{font-size:1.3rem;font-weight:700} header h1 span{color:#60a5fa}
+header h1{font-size:1.3rem;font-weight:700;font-family:'DM Sans',sans-serif;letter-spacing:-.3px} header h1 span{color:#4fc3f7;letter-spacing:0}
 .period-badge{background:#1e3a8a33;border:1px solid #3b82f644;border-radius:20px;padding:4px 12px;font-size:.73rem;color:#93c5fd;display:inline-block;margin-bottom:3px}
 .updated{font-size:.67rem;color:#475569;text-align:right}
 /* TABS + PERIOD BUTTONS */
@@ -89,13 +92,16 @@ footer{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top:
 <body>
 
 <header>
-  <div>
-    <h1>🦷 <span>Klinik</span> Odontologia</h1>
-    <small style="color:#475569;font-size:.7rem">Dashboard Executivo v2.1</small>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div style="width:42px;height:42px;background:linear-gradient(135deg,#0288d1,#00acc1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 12px #0288d144;flex-shrink:0">🦷</div>
+    <div>
+      <h1><span>Klinik</span> Odontologia</h1>
+      <small style="color:#546e8a;font-size:.68rem;letter-spacing:.5px;text-transform:uppercase">Dashboard Executivo · v2.1</small>
+    </div>
   </div>
-  <div>
+  <div style="text-align:right">
     <div class="period-badge" id="period-badge">📅 —</div>
-    <div class="updated">Atualizado em 15/10/2026 14:42</div>
+    <div class="updated">⟳ Atualizado em 15/10/2026 14:42</div>
   </div>
 </header>
 
@@ -173,6 +179,10 @@ footer{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top:
       <div id="proj-content" style="display:flex;flex-direction:column;gap:10px;padding:4px 0"></div>
     </div>
   </div>
+
+  <!-- INSIGHTS AUTOMÁTICOS -->
+  <div class="stitle">💡 Insights do Período</div>
+  <div id="insights-panel" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:16px"></div>
 </div>
 
 <!-- TAB 1 — FINANCEIRO -->
@@ -310,7 +320,7 @@ footer{text-align:center;padding:14px;color:#334155;font-size:.68rem;border-top:
   </div>
 
   <!-- Detalhe diário — mês atual -->
-  <div class="stitle" style="font-size:.78rem;color:var(--text3);margin:4px 0 10px">Detalhe Diário — October/2026</div>
+  <div class="stitle" style="font-size:.78rem;color:var(--text3);margin:4px 0 10px">Detalhe Diário — Outubro/2026</div>
   <div class="kpi-grid">
     <div class="kpi cyan"><label>Méd. Agend./Dia</label><div class="val" id="pd-sched">—</div></div>
     <div class="kpi green"><label>Méd. Atend./Dia</label><div class="val" id="pd-done">—</div></div>
@@ -799,6 +809,96 @@ function renderPeriod(p){
 
   // ── Charts ──
   updateCharts(d);
+
+  // ── Insights ──
+  buildInsights(d);
+}
+
+// ── Insights automáticos ──────────────────────────────────────────────────────
+function buildInsights(d){
+  const el=document.getElementById('insights-panel');
+  if(!el) return;
+  const cards=[];
+
+  // 1 — Melhor mês do período
+  if(d.fin_labels && d.fin_rev && d.fin_rev.length){
+    const vals=d.fin_rev.filter(v=>v!=null&&!isNaN(v));
+    if(vals.length){
+      const maxVal=Math.max(...vals);
+      const idx=d.fin_rev.indexOf(maxVal);
+      const lbl=d.fin_labels[idx]||'';
+      const metaPct=Math.round(maxVal/META*100);
+      const isAboveMeta=maxVal>=META;
+      cards.push(`<div style="background:var(--bg3);border:1px solid ${isAboveMeta?'#10b98133':'var(--border)'};border-radius:10px;padding:14px 16px">
+        <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🏆 Melhor mês (${d.from.split('/')[1]||''})</div>
+        <div style="font-size:.95rem;font-weight:600;color:var(--text)">${lbl} · R$ ${maxVal.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+        <div style="font-size:.78rem;color:${isAboveMeta?'#10b981':'#f5a623'};margin-top:4px">${isAboveMeta?'✅ Acima':'⚠️ Abaixo'} da meta · ${metaPct}% de R$ 100k</div>
+      </div>`);
+    }
+  }
+
+  // 2 — Tendência de receita (últimos 3 meses vs anteriores)
+  if(d.fin_rev && d.fin_rev.length>=4){
+    const valid=d.fin_rev.filter(v=>v!=null&&!isNaN(v));
+    if(valid.length>=4){
+      const half=Math.floor(valid.length/2);
+      const older=valid.slice(0,half).reduce((a,b)=>a+b,0)/half;
+      const newer=valid.slice(-half).reduce((a,b)=>a+b,0)/half;
+      const chg=Math.round((newer-older)/older*100);
+      const up=chg>=0;
+      cards.push(`<div style="background:var(--bg3);border:1px solid ${up?'#10b98133':'#ef444433'};border-radius:10px;padding:14px 16px">
+        <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📈 Tendência de Receita</div>
+        <div style="font-size:.95rem;font-weight:600;color:${up?'#10b981':'#f0455a'}">${up?'Alta':'Queda'} de ${Math.abs(chg)}% na 2ª metade do período</div>
+        <div style="font-size:.78rem;color:var(--text2);margin-top:4px">Média anterior: R$ ${Math.round(older).toLocaleString('pt-BR')} · Recente: R$ ${Math.round(newer).toLocaleString('pt-BR')}</div>
+      </div>`);
+    }
+  }
+
+  // 3 — No-show
+  if(d.noshow_rate!==null && d.noshow_rate!==undefined){
+    const ok=d.noshow_rate<20;
+    const critical=d.noshow_rate>=35;
+    const color=critical?'#f0455a':ok?'#10b981':'#f5a623';
+    const icon=critical?'🚨':ok?'✅':'⚠️';
+    cards.push(`<div style="background:var(--bg3);border:1px solid ${color}33;border-radius:10px;padding:14px 16px">
+      <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🗓️ Taxa de No-Show</div>
+      <div style="font-size:.95rem;font-weight:600;color:${color}">${icon} ${d.noshow_rate}% de faltas (${d.total_misses} no período)</div>
+      <div style="font-size:.78rem;color:var(--text2);margin-top:4px">${critical?'Atenção urgente: perda significativa de receita':ok?'Dentro do limite aceitável (<20%)':'Monitorar — meta abaixo de 20%'}</div>
+    </div>`);
+  }
+
+  // 4 — Conversão de orçamentos
+  if(d.conv_rate!==undefined){
+    const good=d.conv_rate>=60;
+    const low=d.conv_rate<40;
+    const color=good?'#10b981':low?'#f0455a':'#f5a623';
+    cards.push(`<div style="background:var(--bg3);border:1px solid ${color}33;border-radius:10px;padding:14px 16px">
+      <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">💼 Conversão de Orçamentos</div>
+      <div style="font-size:.95rem;font-weight:600;color:${color}">${d.conv_rate}% de aprovação (${d.total_appr} de ${d.total_est})</div>
+      <div style="font-size:.78rem;color:var(--text2);margin-top:4px">${good?'Excelente conversão ≥60%':low?'Baixa conversão — revisar abordagem comercial':'Conversão moderada — meta acima de 60%'}</div>
+    </div>`);
+  }
+
+  // 5 — RFV snapshot (sempre visível, dados globais)
+  const champPct=Math.round(RFV_DATA.champions/RFV_DATA.total_patients*100);
+  const riskPct=Math.round((RFV_DATA.at_risk+RFV_DATA.inactive)/RFV_DATA.total_patients*100);
+  cards.push(`<div style="background:var(--bg3);border:1px solid #f59e0b33;border-radius:10px;padding:14px 16px">
+    <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🎯 Base RFV · ${RFV_DATA.total_patients.toLocaleString('pt-BR')} pacientes</div>
+    <div style="font-size:.95rem;font-weight:600;color:#f59e0b">⭐ ${RFV_DATA.champions} Campeões (${champPct}%) · ⚠️ ${RFV_DATA.at_risk+RFV_DATA.inactive} em risco (${riskPct}%)</div>
+    <div style="font-size:.78rem;color:var(--text2);margin-top:4px">Focar retenção nos Em Risco + Inativos — ${riskPct}% da base precisa de ação</div>
+  </div>`);
+
+  // 6 — Meta mensal média
+  const avgRev=d.avg_monthly_rev||0;
+  const metaGap=Math.round(META-avgRev);
+  const metaOk=avgRev>=META;
+  cards.push(`<div style="background:var(--bg3);border:1px solid ${metaOk?'#10b98133':'#f0455a33'};border-radius:10px;padding:14px 16px">
+    <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🎯 Meta Mensal · R$ 100k</div>
+    <div style="font-size:.95rem;font-weight:600;color:${metaOk?'#10b981':'#f0455a'}">${metaOk?'✅ Meta atingida em média':'❌ Déficit médio de R$ '+Math.abs(metaGap).toLocaleString('pt-BR')+'/mês'}</div>
+    <div style="font-size:.78rem;color:var(--text2);margin-top:4px">Média mensal do período: R$ ${Math.round(avgRev).toLocaleString('pt-BR')} · ${Math.round(avgRev/META*100)}% da meta</div>
+  </div>`);
+
+  el.innerHTML=cards.join('');
 }
 
 // ── Period switch ─────────────────────────────────────────────────────────────
